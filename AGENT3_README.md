@@ -143,5 +143,5 @@ ELEVENLABS_API_KEY
 
 ## Integration Points with Other Agents
 - **→ Agent 2:** `POST /api/intelligence/embed-flow` (called from your flows CRUD after insert/update)
-- **← Agent 2 (Supabase Realtime):** subscribe to `scam_alerts` table inserts for live dashboard alerts
+- **← Agent 2 (Supabase Realtime):** subscribe to `scam_alerts` inserts — rows arrive from both Agent 2's auto `detect-scam` Client Tool and Agent 1's manual `log-scam` Client Tool
 - **← Agent 1 (indirect):** `call_logs`, `call_transcripts`, `intervention_logs` are written by Agent 1 during calls — you read them
