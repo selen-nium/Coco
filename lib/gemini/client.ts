@@ -7,6 +7,10 @@ const embeddingModel = genAI.getGenerativeModel({
   model: "text-embedding-004",
 });
 
+export const brainModel = genAI.getGenerativeModel({
+  model: "gemini-2.0-flash",
+});
+
 /**
  * Generates a 1536-dimensional vector embedding for the given text.
  * Used for storing and searching past conversation history.
