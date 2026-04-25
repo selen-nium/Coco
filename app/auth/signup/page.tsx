@@ -83,17 +83,27 @@ export default function SignupPage() {
   async function handleStep1() {
     setLoading(true); setError("");
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Use admin API route to create user without triggering Supabase email sends
+      const signupRes = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: profile.email, password: profile.password }),
+      });
+      const signupJson = await signupRes.json();
+      if (!signupRes.ok) throw new Error(signupJson.error ?? "Signup failed");
+
+      // Sign in to establish a session in the browser
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: profile.email,
         password: profile.password,
       });
-      if (authError || !authData.user) throw authError ?? new Error("Signup failed");
+      if (signInError) throw signInError;
 
       const res = await fetch("/api/auth/caretaker", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          auth_user_id: authData.user.id,
+          auth_user_id: signupJson.id,
           name: `${profile.firstName} ${profile.lastName}`.trim(),
           email: profile.email,
           phone: profile.phone,
