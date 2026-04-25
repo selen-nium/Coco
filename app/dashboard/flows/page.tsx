@@ -1,18 +1,15 @@
-// TODO (Agent 3): fetch ingested_flows, render table + "Add Flow" modal with step JSONB editor
-export default function FlowsPage() {
+import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
+import { FlowsManager } from "@/components/dashboard/FlowsManager";
+
+export default async function FlowsPage() {
+  const { supabase, caretaker } = await requireAuthenticatedCaretaker();
+  const { data: flows } = await supabase
+    .from("ingested_flows")
+    .select("*")
+    .or(`caretaker_id.eq.${caretaker.id},caretaker_id.is.null`)
+    .order("created_at", { ascending: false });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Ingested Flows</h1>
-        <button className="bg-indigo-600 text-white text-sm px-4 py-2 rounded-lg opacity-50 cursor-not-allowed">
-          + Add Flow
-        </button>
-      </div>
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <p className="text-gray-400 text-sm">
-          Flows list — Agent 3 implements CRUD UI + step JSON editor
-        </p>
-      </div>
-    </div>
+    <FlowsManager initialFlows={flows ?? []} />
   );
 }
