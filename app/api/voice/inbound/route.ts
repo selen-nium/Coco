@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { validateTwilioSignature } from "@/lib/twilio/client";
-import { createConversationalSession, ELEVENLABS_AGENT_ID } from "@/lib/elevenlabs/client";
-import { createSession } from "@/lib/state/call-session";
-import { buildGuidanceSystemPrompt } from "@/lib/gemini/prompts";
+import { ELEVENLABS_AGENT_ID } from "@/lib/elevenlabs/client";
 import type { InboundCallPayload } from "@/types/api";
 
-// POST /api/voice/inbound
 export async function POST(req: NextRequest) {
   const url = req.url;
   const signature = req.headers.get("x-twilio-signature") || "";
@@ -14,7 +11,6 @@ export async function POST(req: NextRequest) {
   const params = Object.fromEntries(body) as Record<string, string>;
   const payload = params as unknown as InboundCallPayload;
 
-  // 1. Validate Twilio signature
   if (!validateTwilioSignature(signature, url, params)) {
     console.error("[voice/inbound] Invalid Twilio signature");
     return new NextResponse("Forbidden", { status: 403 });
@@ -23,10 +19,9 @@ export async function POST(req: NextRequest) {
   const { From, CallSid } = payload;
   const supabase = await createServiceClient();
 
-  // 2. Look up elderly_user by phone number
   const { data: elderlyUser, error: userError } = await supabase
     .from("elderly_users")
-    .select("*, agent_configs(*)")
+    .select("*, agent_configs(*), caretakers(phone)")
     .eq("phone", From)
     .single();
 
@@ -38,7 +33,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 3. Create call_log row in Supabase
   const { data: callLog, error: logError } = await supabase
     .from("call_logs")
     .insert({
@@ -54,46 +48,33 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 
-  // 4. Create in-memory CallSession
-  createSession(CallSid, elderlyUser.id);
-
-  // 5. Prepare ElevenLabs session with overrides
   const agentConfig = elderlyUser.agent_configs[0] || {
-    elevenlabs_voice_id: "default",
-    tts_speed: 1.0,
     metaphor_mode: false,
-    repetition_level: 2,
+  };
+  
+  // Need to handle the caretaker phone format
+  const caretakerPhone = elderlyUser.caretakers?.phone || "Unknown";
+
+  const dynamicVariables = {
+    user_name: elderlyUser.name,
+    metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
+    caretaker_phone: caretakerPhone,
+    call_sid: CallSid
   };
 
-  // SHORTENED PROMPT for URL length safety
-  const initialPrompt = `You are Coco, helping ${elderlyUser.name} with their phone. Speak slowly. Use metaphors: ${agentConfig.metaphor_mode}.`;
+  const dynamicVariablesJson = JSON.stringify(dynamicVariables);
+  const escapedJson = dynamicVariablesJson.replace(/"/g, '&quot;');
+  
+  const websocketUrl = `wss://api.elevenlabs.io/v1/convai/twilio?agent_id=${ELEVENLABS_AGENT_ID}`;
+  const escapedUrl = websocketUrl.replace(/&/g, "&amp;");
 
-  const overrides = {
-    agent: {
-      first_message: `Hi ${elderlyUser.name}, it's Coco. How can I help you today?`,
-      prompt: { prompt: initialPrompt },
-    },
-    tts: {
-      voice_id: agentConfig.elevenlabs_voice_id === "default" ? undefined : agentConfig.elevenlabs_voice_id,
-    }
-  };
-
-  const { websocket_url } = await createConversationalSession({
-    agent_id: ELEVENLABS_AGENT_ID,
-    phone_number: From,
-    call_sid: CallSid,
-    agent_config_override: overrides,
-  });
-
-  const escaped_url = websocket_url.replace(/&/g, "&amp;");
-  console.log("[voice/inbound] WebSocket URL Length:", escaped_url.length);
-
-  // 6. Return TwiML <Connect><Stream> pointing to ElevenLabs
   return new NextResponse(
     `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
       <Connect>
-        <Stream url="${escaped_url}" />
+        <Stream url="${escapedUrl}">
+          <Parameter name="dynamic_variables" value="${escapedJson}" />
+        </Stream>
       </Connect>
     </Response>`,
     { headers: { "Content-Type": "text/xml" } }
