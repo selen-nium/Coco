@@ -343,7 +343,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setAgent(a => ({ ...a, metaphor: !a.metaphor }))}
-                  className={`relative h-6 w-11 rounded-full transition-colors ${agent.metaphor ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
+                  className={`relative h-6 w-11 rounded-full overflow-hidden transition-colors ${agent.metaphor ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
                 >
                   <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${agent.metaphor ? "translate-x-5" : "translate-x-0.5"}`} />
                 </button>
