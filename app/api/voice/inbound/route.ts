@@ -4,6 +4,19 @@ import { validateTwilioSignature } from "@/lib/twilio/client";
 import { ELEVENLABS_AGENT_ID } from "@/lib/elevenlabs/client";
 import type { InboundCallPayload } from "@/types/api";
 
+function escapeXml(unsafe: string) {
+  return unsafe.replace(/[<>&'"]/g, function (c) {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
 export async function POST(req: NextRequest) {
   const url = req.url;
   const signature = req.headers.get("x-twilio-signature") || "";
@@ -48,41 +61,45 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 
+  // Fetch last 3 call summaries for pre-loaded memory
+  const { data: recentCalls } = await supabase
+    .from("call_logs")
+    .select("summary")
+    .eq("elderly_user_id", elderlyUser.id)
+    .not("summary", "is", null)
+    .order("started_at", { ascending: false })
+    .limit(3);
+
+  const recentHistory = recentCalls && recentCalls.length > 0
+    ? recentCalls.map(c => c.summary).join(" ")
+    : "No recent conversations.";
+
   const agentConfig = elderlyUser.agent_configs[0] || {
     metaphor_mode: false,
   };
   
-  // Need to handle the caretaker phone format
   const caretakerPhone = elderlyUser.caretakers?.phone || "Unknown";
 
-  const clientData = {
-    type: "conversation_initiation_client_data",
-    dynamic_variables: {
-      user_name: elderlyUser.name,
-      metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
-      caretaker_phone: caretakerPhone,
-      call_sid: CallSid,
-      call_log_id: callLog.id,
-      elderly_user_id: elderlyUser.id
-    }
+  const dynamicVariables = {
+    user_name: elderlyUser.name,
+    metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
+    caretaker_phone: caretakerPhone,
+    call_log_id: callLog.id,
+    elderly_user_id: elderlyUser.id,
+    recent_history: recentHistory
   };
 
-  const customParameters = JSON.stringify({
-    conversation_initiation_client_data: clientData
-  });
-
-  // URL-encode the JSON to safely pass it in TwiML as per ElevenLabs requirements
-  const encodedParameters = encodeURIComponent(customParameters);
+  const escapedDynamicVars = escapeXml(JSON.stringify(dynamicVariables));
   
   const websocketUrl = `wss://api.elevenlabs.io/v1/convai/twilio?agent_id=${ELEVENLABS_AGENT_ID}`;
-  const escapedUrl = websocketUrl.replace(/&/g, "&amp;");
+  const escapedUrl = escapeXml(websocketUrl);
 
   return new NextResponse(
     `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
       <Connect>
         <Stream url="${escapedUrl}">
-          <Parameter name="custom_parameters" value="${encodedParameters}" />
+          <Parameter name="dynamic_variables" value="${escapedDynamicVars}" />
         </Stream>
       </Connect>
     </Response>`,
