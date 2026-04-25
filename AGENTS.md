@@ -22,7 +22,52 @@ Three agents work this repo in parallel. Each agent owns specific files and must
 { flow_id: string | null; flow: IngestedFlow | null; similarity: number | null }
 ```
 
-**Supabase Realtime** — Agent 2 writes `scam_alerts`; Agent 3 subscribes to `scam_alerts` inserts for live dashboard banners.
+**`/api/tools/get-user-context` response** — Agent 1 owns; ElevenLabs calls at conversation start:
+```ts
+// input: { elderly_user_id: string }
+{
+  name: string;
+  agent_config: {
+    elevenlabs_voice_id: string;
+    tts_speed: number;
+    repetition_level: number;
+    metaphor_mode: boolean;
+    allow_sensitive_flows: boolean;
+  };
+}
+```
+
+**`/api/tools/match-intent` response** — Agent 2 owns; ElevenLabs calls when user states a task:
+```ts
+// input: { query: string; elderly_user_id: string }
+{
+  matched: boolean;
+  intent_id: string | null;
+  confidence: number;
+  needs_clarification: boolean;
+  clarification_question?: string;
+}
+```
+
+**`/api/tools/get-intent-instructions` response** — Agent 2 owns; ElevenLabs calls after an intent is matched:
+```ts
+// input: { intent_id: string; elderly_user_id: string }
+{
+  id: string;
+  name: string;
+  app: string;
+  description: string;
+  steps: unknown;
+}
+```
+
+**`/api/tools/detect-scam` response** — Agent 2 owns; ElevenLabs calls periodically with transcript chunks:
+```ts
+// input: { transcript_chunk: string; call_log_id: string; elderly_user_id: string }
+{ scam_detected: boolean; confidence: number; keywords: string[]; severity: "high" | "critical" }
+```
+
+**Supabase Realtime** — Agent 2 writes `scam_alerts` (both via manual `log-scam` tool and auto `detect-scam`); Agent 3 subscribes to `scam_alerts` inserts for live dashboard banners. No SMS alerting is assumed.
 
 ---
 

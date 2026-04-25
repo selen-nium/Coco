@@ -1,26 +1,31 @@
-# Agent 2 — Memory Layer (ElevenLabs Edition)
+# Agent 2 — Intelligence Layer (ElevenLabs Edition)
 
 ## Mission
-Act asthe "Long-Term Librarian" for the ElevenLabs Agent. Since ElevenLabs handles real-time conversation, safety, and summarization natively, Agent 2 is strictly responsible for **transcript embedding** and **semantic memory retrieval**. This allows the AI to remember specific details from past calls across months or years.
+Act as the "Brain" for the ElevenLabs Agent. You own all AI-powered reasoning: semantic memory retrieval, intent matching, flow lookup, and real-time scam detection. You expose these capabilities as Server Tools that ElevenLabs calls mid-conversation, and as a post-call webhook for transcript embedding.
 
 ## Files You Own
 ```
-app/api/intelligence/post-call/route.ts      ← Syncs ElevenLabs data & generates embeddings
-app/api/tools/recall-memory/route.ts         ← Tool for ElevenLabs to search old history
-lib/gemini/client.ts                         ← text-embedding-004 only
+app/api/intelligence/post-call/route.ts      ← Post-call webhook: syncs ElevenLabs data & embeds transcripts
+app/api/tools/recall-memory/route.ts         ← Server Tool: semantic search over past call transcripts
+app/api/tools/match-intent/route.ts          ← Server Tool: map user utterance → intent classification
+app/api/tools/get-intent-instructions/route.ts ← Server Tool: fetch canonical instructions for a matched intent
+app/api/tools/detect-scam/route.ts           ← Server Tool: real-time scam analysis via Gemini
+lib/gemini/client.ts                         ← embedText() + generateText() helpers
 ```
 
 ## Do Not Touch
 - `app/api/voice/*` — Agent 1 (Telephony/Twilio)
-- `app/api/tools/*` — Agent 1 & 2 (Core Agent Tools)
+- `app/api/tools/escalate`, `log-scam`, `get-user-context` — Agent 1
 - `app/api/dashboard/*` — Agent 3 (Frontend API)
 
 ---
 
 ## Tasks (implement in this order)
 
-### 1. Vector Embedding Helper (`lib/gemini/client.ts`)
-Ensure you have `embedText(text: string): Promise<number[]>` using Gemini's `text-embedding-004` (1536 dimensions). This powers the search engine for user history.
+### 1. Gemini Client (`lib/gemini/client.ts`)
+Export two helpers:
+- `embedText(text: string): Promise<number[]>` — Gemini `text-embedding-004`, 1536 dimensions. Used by recall-memory and match-intent.
+- `generateText(prompt: string): Promise<string>` — Gemini Flash/Pro for the LLM judge in intent matching and scam analysis.
 
 ### 2. The Post-Call Webhook (`/api/intelligence/post-call`)
 Configure this route to be the "Post-call webhook" in the ElevenLabs dashboard.
@@ -29,16 +34,61 @@ Configure this route to be the "Post-call webhook" in the ElevenLabs dashboard.
    - Generate a vector embedding using `embedText()`.
    - Insert into `call_transcripts` table including the `embedding` vector.
 
-### 3. Memory Retrieval Tool (`/api/tools/recall-memory`)
-Expose this as a Client Tool in the ElevenLabs dashboard. ElevenLabs will call this if the user asks about past conversations (e.g., "What was that recipe we talked about last month?").
-1. **Input:** Expects `query` (the user's question) and `elderly_user_id`.
-2. **Action:** 
-   - Embed the `query`.
-   - Call Supabase RPC `match_memory(query_embedding, elderly_user_id)` to find the most relevant past transcript snippets.
-3. **Output:** Return the text snippets to ElevenLabs so the Agent can answer accurately.
+### 3. Memory Retrieval Server Tool (`/api/tools/recall-memory`)
+ElevenLabs calls this when the user asks about past conversations (e.g., "What was that recipe we talked about last month?").
+1. **Input:** `{ query: string; elderly_user_id: string }`
+2. **Action:** Embed `query` → call Supabase RPC `match_memory(query_embedding, elderly_user_id)`.
+3. **Output:** Return the matched text snippets so the Agent can answer accurately.
 
+### 4. Intent Matching Server Tool (`/api/tools/match-intent`)
+ElevenLabs calls this when the user states a task or goal (e.g., "I want to send money to my grandchild").
+1. **Input:** `{ query: string; elderly_user_id: string }`
+2. **Action:**
+   - Embed `query` using `embedText()`.
+   - Cosine-search the `ingested_flows` table for the closest match.
+   - **If exact/rule match or similarity ≥ high threshold:** return the matched `intent_id` directly.
+   - **If similarity is in the middle band:** pass the top candidates + original query to `generateText()` (LLM judge). Ask it to decide whether the candidate is correct or whether clarification is needed.
+   - **If similarity is low:** return no match.
+3. **Output:**
+   ```ts
+   {
+     matched: boolean;
+     intent_id: string | null;
+     confidence: number;
+      needs_clarification: boolean;
+     clarification_question?: string;
+   }
+   ```
+4. **Clarification loop:** If `needs_clarification: true`, ElevenLabs asks the user `clarification_question`, then calls this tool again with the refined query.
+
+### 5. Intent Instruction Server Tool (`/api/tools/get-intent-instructions`)
+ElevenLabs calls this only after `match-intent` returns a matched `intent_id`.
+1. **Input:** `{ intent_id: string; elderly_user_id: string }`
+2. **Action:** Query the `ingested_flows` row for the canonical step-by-step instructions mapped to that `intent_id`. In the current schema, `intent_id` should resolve to `ingested_flows.id`.
+3. **Output:**
+   ```ts
+   {
+     id: string;
+     name: string;
+     app: string;
+     description: string;
+     steps: unknown;
+   }
+   ```
+4. **Usage:** The guided-task branch uses the returned `name`, `app`, `description`, and `steps` from `ingested_flows` as runtime context for step-by-step instruction following.
+
+### 6. Scam Detection Server Tool (`/api/tools/detect-scam`)
+ElevenLabs calls this periodically with recent transcript chunks during the conversation.
+1. **Input:** `{ transcript_chunk: string; call_log_id: string; elderly_user_id: string }`
+2. **Action:** Pass `transcript_chunk` to `generateText()` with a scam-detection prompt. Look for: urgency pressure, gift card requests, impersonation of banks/government, requests to wire money.
+3. **If scam detected:** Insert a row into `scam_alerts` (triggers Agent 3's Realtime subscription automatically).
+4. **Output:**
+   ```ts
+   { scam_detected: boolean; confidence: number; keywords: string[]; severity: "high" | "critical" }
+   ```
+- **Note:** This is the automatic detection layer. The manual `log-scam` Server Tool (owned by Agent 1) remains for the ElevenLabs agent to explicitly flag something it noticed in the conversation. No SMS alerting is assumed; alerts surface through the caretaker dashboard.
 
 ---
 
 ## Agent 1 Integration Note (Pre-loaded Memory)
-11Agent 1's inbound Twilio route (`/api/voice/inbound`) should fetch the last 3 call summaries from `call_logs` and inject them into the initial ElevenLabs context as a dynamic variable (e.g., `{{recent_history}}`). This provides "instant" memory without needing a tool call.
+Agent 1's inbound Twilio route (`/api/voice/inbound`) fetches the last 3 call summaries from `call_logs` and injects them as `{{recent_history}}` dynamic variable. This gives instant context without a tool call. The `recall-memory` tool is for on-demand retrieval of older/specific memories during the conversation.
