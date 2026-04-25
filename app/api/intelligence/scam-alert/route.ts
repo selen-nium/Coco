@@ -87,9 +87,10 @@ async function handleScamAlert(rawPayload: unknown) {
     throw elderlyUserError ?? new Error("Failed to load caretaker phone");
   }
 
-  const caretakerPhone = Array.isArray(elderlyUser.caretaker)
-    ? elderlyUser.caretaker[0]?.phone
-    : elderlyUser.caretaker?.phone;
+  const caretaker = elderlyUser.caretaker as { name: string; phone: string } | { name: string; phone: string }[] | null;
+  const caretakerPhone = Array.isArray(caretaker)
+    ? caretaker[0]?.phone
+    : caretaker?.phone;
 
   if (caretakerPhone) {
     await twilioClient.messages.create({
