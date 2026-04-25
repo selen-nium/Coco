@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { PhoneModelSelect } from "@/components/ui/PhoneModelSelect";
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | "2verify" | 3;
 
 interface ProfileData {
   firstName: string;
@@ -32,12 +32,13 @@ interface AgentData {
 const STEP_LABELS = ["Your profile", "Link loved one", "Set up agent"];
 
 function StepIndicator({ current }: { current: Step }) {
+  const currentNum = current === "2verify" ? 2 : (current as number);
   return (
     <div className="flex items-center gap-0">
       {STEP_LABELS.map((label, i) => {
-        const step = (i + 1) as Step;
-        const done = step < current;
-        const active = step === current;
+        const stepNum = i + 1;
+        const done = stepNum < currentNum;
+        const active = stepNum === currentNum;
         return (
           <div key={label} className="flex items-center">
             <div className="flex flex-col items-center gap-2">
@@ -70,6 +71,8 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [caretakerId, setCaretakerId] = useState("");
   const [elderlyUserId, setElderlyUserId] = useState("");
+  const [demoCode, setDemoCode] = useState("");
+  const [enteredCode, setEnteredCode] = useState("");
 
   const [profile, setProfile] = useState<ProfileData>({ firstName: "", lastName: "", email: "", phone: "", password: "" });
   const [elderly, setElderly] = useState<ElderlyData>({ name: "", age: "", phone: "", nickname: "", phoneModel: "" });
@@ -124,6 +127,25 @@ export default function SignupPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to link user");
       setElderlyUserId(json.elderly_user_id);
+      setDemoCode(json.verification_code);
+      setStep("2verify");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify() {
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/dashboard/elderly/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ elderly_user_id: elderlyUserId, code: enteredCode }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.verified) throw new Error("Incorrect code. Try again.");
       setStep(3);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -227,6 +249,33 @@ export default function SignupPage() {
                 <Button variant="ghost" onClick={() => setStep(1)}>← Back</Button>
                 <Button onClick={handleStep2} disabled={loading || !elderly.name || !elderly.phone} size="lg">
                   {loading ? "Sending…" : "Send verification SMS →"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2 verify: Demo code entry */}
+          {step === "2verify" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-[#1a1208]">Verify the connection</h2>
+                <p className="mt-1 text-sm text-[#888]">In production, this code would be sent to {elderly.name}&apos;s phone. For this demo, use the code below.</p>
+              </div>
+              <div className="rounded-xl bg-[#fef3e0] border border-[#fde68a] px-5 py-4 text-center">
+                <p className="text-xs font-medium uppercase tracking-wider text-[#d97706] mb-2">Demo verification code</p>
+                <p className="text-4xl font-bold tracking-widest text-[#1a1208]">{demoCode}</p>
+                <p className="text-xs text-[#d97706] mt-2">This code would normally be sent via SMS</p>
+              </div>
+              <Input
+                label="Enter the code above"
+                placeholder="______"
+                value={enteredCode}
+                onChange={e => setEnteredCode(e.target.value)}
+              />
+              <div className="flex justify-between pt-2">
+                <Button variant="ghost" onClick={() => setStep(2)}>← Back</Button>
+                <Button onClick={handleVerify} disabled={loading || enteredCode.length < 6} size="lg">
+                  {loading ? "Verifying…" : "Verify →"}
                 </Button>
               </div>
             </div>
