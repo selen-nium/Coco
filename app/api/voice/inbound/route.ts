@@ -75,7 +75,12 @@ export async function POST(req: NextRequest) {
     <Response>
       <Connect>
         <Stream url="${escapedUrl}">
-          <Parameter name="dynamic_variables" value="${escapedJson}" />
+          <Parameter name="user_name" value="${elderlyUser.name}" />
+          <Parameter name="metaphor_mode" value="${agentConfig.metaphor_mode ? "true" : "false"}" />
+          <Parameter name="caretaker_phone" value="${caretakerPhone}" />
+          <Parameter name="call_sid" value="${CallSid}" />
+          <Parameter name="call_log_id" value="${callLog.id}" />
+          <Parameter name="elderly_user_id" value="${elderlyUser.id}" />
           <Parameter name="metadata" value="${escapedJson}" />
         </Stream>
       </Connect>

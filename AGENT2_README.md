@@ -41,4 +41,4 @@ Expose this as a Client Tool in the ElevenLabs dashboard. ElevenLabs will call t
 ---
 
 ## Agent 1 Integration Note (Pre-loaded Memory)
-Agent 1's inbound Twilio route (`/api/voice/inbound`) should fetch the last 3 call summaries from `call_logs` and inject them into the initial ElevenLabs context as a dynamic variable (e.g., `{{recent_history}}`). This provides "instant" memory without needing a tool call.
+1Agent 1's inbound Twilio route (`/api/voice/inbound`) should fetch the last 3 call summaries from `call_logs` and inject them into the initial ElevenLabs context as a dynamic variable (e.g., `{{recent_history}}`). This provides "instant" memory without needing a tool call.
