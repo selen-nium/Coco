@@ -59,7 +59,9 @@ export async function POST(req: NextRequest) {
     user_name: elderlyUser.name,
     metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
     caretaker_phone: caretakerPhone,
-    call_sid: CallSid
+    call_sid: CallSid,
+    call_log_id: callLog.id,
+    elderly_user_id: elderlyUser.id
   };
 
   const dynamicVariablesJson = JSON.stringify(dynamicVariables);
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
       <Connect>
         <Stream url="${escapedUrl}">
           <Parameter name="dynamic_variables" value="${escapedJson}" />
+          <Parameter name="metadata" value="${escapedJson}" />
         </Stream>
       </Connect>
     </Response>`,
