@@ -1,7 +1,7 @@
 # Agent 2 — Memory Layer (ElevenLabs Edition)
 
 ## Mission
-Act as the "Long-Term Librarian" for the ElevenLabs Agent. Since ElevenLabs handles real-time conversation, safety, and summarization natively, Agent 2 is strictly responsible for **transcript embedding** and **semantic memory retrieval**. This allows the AI to remember specific details from past calls across months or years.
+Act asthe "Long-Term Librarian" for the ElevenLabs Agent. Since ElevenLabs handles real-time conversation, safety, and summarization natively, Agent 2 is strictly responsible for **transcript embedding** and **semantic memory retrieval**. This allows the AI to remember specific details from past calls across months or years.
 
 ## Files You Own
 ```
