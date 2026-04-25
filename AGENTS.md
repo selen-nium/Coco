@@ -25,13 +25,16 @@ Three agents work this repo in parallel. Each agent owns specific files and must
 **`/api/tools/get-user-context` response** — Agent 1 owns; ElevenLabs calls at conversation start:
 ```ts
 // input: { elderly_user_id: string }
-{ name: string; voice_config: { voice_id: string; speed: number; stability: number } }
-```
-
-**`/api/tools/get-instructions` response** — Agent 1 owns; ElevenLabs appends to system prompt:
-```ts
-// input: { elderly_user_id: string }
-{ instructions: string }
+{
+  name: string;
+  agent_config: {
+    elevenlabs_voice_id: string;
+    tts_speed: number;
+    repetition_level: number;
+    metaphor_mode: boolean;
+    allow_sensitive_flows: boolean;
+  };
+}
 ```
 
 **`/api/tools/match-intent` response** — Agent 2 owns; ElevenLabs calls when user states a task:
@@ -43,17 +46,28 @@ Three agents work this repo in parallel. Each agent owns specific files and must
   confidence: number;
   needs_clarification: boolean;
   clarification_question?: string;
-  flow?: IngestedFlow;
+}
+```
+
+**`/api/tools/get-intent-instructions` response** — Agent 2 owns; ElevenLabs calls after an intent is matched:
+```ts
+// input: { intent_id: string; elderly_user_id: string }
+{
+  id: string;
+  name: string;
+  app: string;
+  description: string;
+  steps: unknown;
 }
 ```
 
 **`/api/tools/detect-scam` response** — Agent 2 owns; ElevenLabs calls periodically with transcript chunks:
 ```ts
 // input: { transcript_chunk: string; call_log_id: string; elderly_user_id: string }
-{ scam_detected: boolean; confidence: number; keywords: string[]; severity: "low" | "medium" | "high" | "critical" }
+{ scam_detected: boolean; confidence: number; keywords: string[]; severity: "high" | "critical" }
 ```
 
-**Supabase Realtime** — Agent 2 writes `scam_alerts` (both via manual `log-scam` tool and auto `detect-scam`); Agent 3 subscribes to `scam_alerts` inserts for live dashboard banners.
+**Supabase Realtime** — Agent 2 writes `scam_alerts` (both via manual `log-scam` tool and auto `detect-scam`); Agent 3 subscribes to `scam_alerts` inserts for live dashboard banners. No SMS alerting is assumed.
 
 ---
 

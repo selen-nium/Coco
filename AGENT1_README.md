@@ -1,18 +1,16 @@
 # Agent 1 — Voice & Telephony Pipeline (ElevenLabs Edition)
 
 ## Mission
-Wire up the end-to-end phone call using the ElevenLabs Agents API. Twilio handles the telephony, and your Next.js app handles the inbound webhook to route the call to ElevenLabs. You are also responsible for providing the core "Client Tools" (webhooks) that the AI uses to interact with the database and the caretaker...
+Wire up the end-to-end phone call using the ElevenLabs Agents API. Twilio handles the telephony, and your Next.js app handles the inbound webhook to route the call to ElevenLabs. You are also responsible for providing the core Server Tools (webhooks) that the AI uses to interact with the database and the caretaker.
 
 ## Files You Own
 ```
 app/api/voice/inbound/route.ts            ← Entry point (Twilio)
 app/api/voice/status/route.ts             ← Cleanup/Log duration (Twilio)
 app/api/voice/sms/route.ts                ← Caretaker linking logic
-app/api/tools/escalate/route.ts           ← Client Tool: AI flags frustration
-app/api/tools/log-scam/route.ts           ← Client Tool: AI manually logs a threat
-app/api/tools/send-sms/route.ts           ← Client Tool: AI messages caretaker
-app/api/tools/get-user-context/route.ts   ← Client Tool: fetch name + voice config at call start
-app/api/tools/get-instructions/route.ts   ← Client Tool: fetch per-user behavioral instructions
+app/api/tools/escalate/route.ts           ← Server Tool: AI flags frustration
+app/api/tools/log-scam/route.ts           ← Server Tool: AI manually logs a threat
+app/api/tools/get-user-context/route.ts   ← Server Tool: fetch elderly_users + agent_configs fields at call start
 lib/twilio/client.ts
 ```
 
@@ -34,25 +32,31 @@ This is the most critical route. It bridges the user to ElevenLabs and provides 
    - **Crucial:** Pass `call_log_id`, `elderly_user_id`, `user_name`, and `recent_history` as JSON in the `<Parameter name="dynamic_variables" ... />` tag.
 
 ### 2. Core Agent Tools (`/api/tools/*`)
-These are POST endpoints registered as **Client Tools** in the ElevenLabs dashboard. ElevenLabs calls them mid-conversation.
+These are POST endpoints registered as Server Tools in the ElevenLabs dashboard. ElevenLabs calls them mid-conversation.
 
 - **Escalate** (`/api/tools/escalate`): Updates `call_logs.status = 'escalated'`.
-- **Log Scam** (`/api/tools/log-scam`): Inserts into `intervention_logs` with type `scam`. Used when the AI manually flags a threat.
-- **Send SMS** (`/api/tools/send-sms`): Dispatches a Twilio message to the caretaker's phone.
+- **Log Scam** (`/api/tools/log-scam`): Inserts into `intervention_logs` with type `scam` and creates/updates the dashboard-visible `scam_alerts` state. Used when the AI manually flags a threat.
 
-### 3. Context Client Tools (`/api/tools/get-user-context` + `/api/tools/get-instructions`)
-Register both as **Client Tools** that ElevenLabs calls at the very start of each conversation (configure as "conversation start" triggers in the ElevenLabs dashboard).
+### 3. Context Server Tool (`/api/tools/get-user-context`)
+Register this as a Server Tool that ElevenLabs calls at the very start of each conversation.
 
 **`/api/tools/get-user-context`**
 - Input: `{ elderly_user_id: string }` — ElevenLabs passes this from the `dynamic_variables` set in the inbound TwiML.
 - Action: Fetch the `elderly_users` row + their `agent_configs` row.
-- Output: `{ name: string; voice_config: { voice_id, speed, stability } }`
-- The ElevenLabs agent uses `name` in its greeting and applies `voice_config` to the session.
-
-**`/api/tools/get-instructions`**
-- Input: `{ elderly_user_id: string }`
-- Action: Fetch `agent_configs.custom_instructions` for this user.
-- Output: `{ instructions: string }` — a plain-text block the agent appends to its working context (e.g. "Always speak slowly. Remind about medication at the end of calls.").
+- Output:
+  ```ts
+  {
+    name: string;
+    agent_config: {
+      elevenlabs_voice_id: string;
+      tts_speed: number;
+      repetition_level: number;
+      metaphor_mode: boolean;
+      allow_sensitive_flows: boolean;
+    };
+  }
+  ```
+- The ElevenLabs agent uses `name` from `elderly_users.name` and configuration values from `agent_configs`.
 
 ### 4. Twilio Status Cleanup (`/api/voice/status`)
 Twilio fires this when the physical phone line closes.
@@ -66,6 +70,8 @@ Handle the 6-digit code loop to verify new elderly users and link them to careta
 
 ## ElevenLabs Integration
 - **System Prompt:** Configure the Agent's base instructions on the ElevenLabs dashboard.
-- **Client Tools:** Register all `/api/tools/*` URLs as "Client Tools" in the ElevenLabs dashboard. Mark `get-user-context` and `get-instructions` as conversation-start triggers.
-- **Dynamic Variables:** The inbound TwiML must pass `elderly_user_id` and `call_log_id` in `<Parameter name="dynamic_variables" />` so every Client Tool can identify the user without an extra lookup.
-- **Do not** hardcode user name or instructions in dynamic variables — those are now fetched live by the Client Tools so they stay up-to-date.
+- **Server Tools:** Register all `/api/tools/*` URLs as Server Tools in the ElevenLabs dashboard. Mark `get-user-context` to run at conversation start if that trigger is available in the chosen workflow shape.
+- **Dynamic Variables:** The inbound TwiML must pass `elderly_user_id` and `call_log_id` in `<Parameter name="dynamic_variables" />` so every Server Tool can identify the user without an extra lookup.
+- **Do not** hardcode user name in dynamic variables — fetch live context through `get-user-context`.
+- **Intent-specific instructions** are not owned here; ElevenLabs should call Agent 2's intent tools after the user states a task.
+- **Per-user behavioral instructions:** there is no `agent_configs.custom_instructions` column in the current schema, so this route should only return fields that actually exist today.
