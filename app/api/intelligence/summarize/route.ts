@@ -1,19 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { SummarizePayload } from "@/types/api";
+import { z } from "zod";
+import { brainModel } from "@/lib/gemini/client";
+import { CALL_SUMMARIZATION_PROMPT } from "@/lib/gemini/prompts";
+import { createServiceClient } from "@/lib/supabase/server";
+
+const summarizePayloadSchema = z.object({
+  call_log_id: z.string().uuid(),
+});
 
 // POST /api/intelligence/summarize
 // Called at end of call. Gemini 2.5 Flash reads full transcript and writes a 2-sentence summary.
 // Agent 2 owns this route.
 export async function POST(req: NextRequest) {
-  // TODO (Agent 2):
-  // 1. Parse SummarizePayload
-  // 2. Fetch all call_transcripts for call_log_id
-  // 3. Send to brainModel (Gemini 2.5 Flash) with summarization prompt
-  // 4. Update call_logs.summary with result
+  try {
+    const payload = summarizePayloadSchema.parse(await req.json());
+    const supabase = await createServiceClient();
 
-  const payload: SummarizePayload = await req.json();
+    const { data: transcripts, error: transcriptError } = await supabase
+      .from("call_transcripts")
+      .select("speaker, text, timestamp")
+      .eq("call_log_id", payload.call_log_id)
+      .order("timestamp", { ascending: true });
 
-  console.log("[intelligence/summarize]", payload.call_log_id);
+    if (transcriptError) {
+      throw transcriptError;
+    }
 
-  return NextResponse.json({ ok: true });
+    const dialogue = (transcripts ?? [])
+      .map((entry) => `[${entry.speaker === "agent" ? "Agent" : "User"}]: ${entry.text}`)
+      .join("\n");
+
+    const result = await brainModel.generateContent(
+      `${CALL_SUMMARIZATION_PROMPT}\n\nTranscript:\n${dialogue}`
+    );
+
+    const summary = result.response.text().trim();
+
+    const { error: updateError } = await supabase
+      .from("call_logs")
+      .update({ summary })
+      .eq("id", payload.call_log_id);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    console.log("[intelligence/summarize]", payload.call_log_id);
+    return NextResponse.json({ ok: true, summary });
+  } catch (error) {
+    console.error("[intelligence/summarize]", error);
+    return NextResponse.json(
+      { error: "Failed to summarize call" },
+      { status: 500 }
+    );
+  }
 }

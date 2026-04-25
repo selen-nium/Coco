@@ -35,3 +35,20 @@ Respond with JSON only:
   "detected_keywords": string[],
   "excerpt": string
 }`;
+
+export const CALL_SUMMARIZATION_PROMPT =
+  "Summarize this call in exactly 2 sentences. Focus on what was accomplished and any notable difficulties.";
+
+export const MOOD_ANALYSIS_PROMPT = `Analyze the user's emotional state across this call transcript.
+
+Respond with JSON only:
+{
+  "sentiment_score": number,
+  "frustration_level": number,
+  "confusion_level": number
+}
+
+Rules:
+- sentiment_score must be between -1 and 1
+- frustration_level must be between 0 and 1
+- confusion_level must be between 0 and 1`;

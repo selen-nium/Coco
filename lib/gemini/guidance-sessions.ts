@@ -17,3 +17,18 @@ export function getGuidanceSession(call_sid: string): ChatSession | undefined {
 export function deleteGuidanceSession(call_sid: string): void {
   sessions.delete(call_sid);
 }
+
+export async function streamGeminiToOpenAI(
+  session: ChatSession,
+  userMessage: string,
+  onChunk: (chunk: string) => void
+): Promise<void> {
+  const result = await session.sendMessageStream(userMessage);
+
+  for await (const chunk of result.stream) {
+    const text = chunk.text();
+    if (text) {
+      onChunk(text);
+    }
+  }
+}
