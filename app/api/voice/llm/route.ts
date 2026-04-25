@@ -1,53 +1,117 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getSession } from "@/lib/state/call-session";
 import { getGuidanceSession } from "@/lib/gemini/guidance-sessions";
+import { brainModel } from "@/lib/gemini/client";
+import { buildGuidanceSystemPrompt } from "@/lib/gemini/prompts";
+import { createServiceClient } from "@/lib/supabase/server";
 
 // POST /api/voice/llm
-// ElevenLabs Custom LLM endpoint — called by ElevenLabs for every conversation turn.
-// ElevenLabs sends an OpenAI-compatible chat payload; we forward it to the Gemini
-// guidance session (which already has the matched flow in context) and stream back
-// the response in OpenAI SSE format so ElevenLabs can speak it via TTS.
-//
-// Configured in ElevenLabs agent settings as:
-//   Custom LLM URL: https://<your-domain>/api/voice/llm
-//
-// Agent 1 owns this route (wires it to ElevenLabs config).
-// Agent 2 owns getGuidanceSession() — the Gemini session with flow context.
-
+// ElevenLabs Custom LLM endpoint — called for every conversation turn.
+// Priority: use Agent 2's matched-flow Gemini session if available,
+// otherwise fall back to a stateless brainModel call with base prompt.
+// Configure in ElevenLabs agent: Custom LLM URL = https://<domain>/api/voice/llm
 export async function POST(req: NextRequest) {
-  // TODO (Agent 1 + Agent 2 joint):
-  //
-  // Agent 1's responsibility:
-  // 1. Parse the ElevenLabs OpenAI-compatible payload:
-  //    { model, messages: [{role, content}], stream, metadata: { call_sid } }
-  // 2. Extract call_sid from metadata or a custom header ElevenLabs passes
-  // 3. Look up CallSession to get flow_id
-  //
-  // Agent 2's responsibility:
-  // 4. Call getGuidanceSession(call_sid) to retrieve the live Gemini chat session
-  //    (already loaded with matched flow steps + system prompt)
-  // 5. Extract the latest user message from messages[]
-  // 6. Send to Gemini chat session: session.sendMessageStream(userMessage)
-  // 7. Stream back tokens in OpenAI SSE format:
-  //    data: {"choices":[{"delta":{"content":"..."}}]}\n\n
-  //    data: [DONE]\n\n
-  //
-  // If no guidance session exists yet (flow not matched), fall back to a
-  // general Gemini call with the base elderly-assistant system prompt.
-
   const body = await req.json();
-  const callSid = body.metadata?.call_sid ?? req.headers.get("x-call-sid");
+  const { messages, metadata } = body;
+  const call_sid = metadata?.call_sid;
 
-  console.log("[voice/llm] turn for call_sid:", callSid);
+  if (!call_sid) {
+    return new Response(JSON.stringify({ error: "No call_sid in metadata" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-  // Stub: echo last user message back so ElevenLabs doesn't hang
-  const lastUserMessage =
-    body.messages?.findLast((m: { role: string }) => m.role === "user")
-      ?.content ?? "Hello";
+  const lastUserMessage = messages?.[messages.length - 1]?.content ?? "";
+  const session = getSession(call_sid);
 
-  const stubResponse = {
-    choices: [{ message: { role: "assistant", content: `I heard: ${lastUserMessage}` } }],
-  };
+  // Use Agent 2's guidance session (has matched flow in context) if ready
+  const guidanceSession = getGuidanceSession(call_sid);
 
-  return NextResponse.json(stubResponse);
+  try {
+    let stream: ReadableStream;
+
+    if (guidanceSession) {
+      // Happy path: flow-aware Gemini chat session created by Agent 2 after intent match
+      const result = await guidanceSession.sendMessageStream(lastUserMessage);
+      stream = new ReadableStream({
+        async start(controller) {
+          for await (const chunk of result.stream) {
+            const text = chunk.text();
+            if (text) {
+              controller.enqueue(
+                `data: ${JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: null, index: 0 }] })}\n\n`
+              );
+            }
+          }
+          controller.enqueue(`data: [DONE]\n\n`);
+          controller.close();
+        },
+      });
+    } else {
+      // Fallback: stateless call, used on first turn before intent match resolves
+      const supabase = await createServiceClient();
+      const { data: elderlyUser } = await supabase
+        .from("elderly_users")
+        .select("*, agent_configs(*)")
+        .eq("id", session?.elderly_user_id)
+        .single();
+
+      const agentConfig = elderlyUser?.agent_configs?.[0] ?? {
+        metaphor_mode: false,
+        tts_speed: 1.0,
+        repetition_level: 2,
+      };
+
+      const systemPrompt = buildGuidanceSystemPrompt(
+        elderlyUser?.name ?? "there",
+        {
+          metaphor_mode: agentConfig.metaphor_mode,
+          tts_speed: agentConfig.tts_speed,
+          repetition_level: agentConfig.repetition_level,
+        },
+        null
+      );
+
+      const result = await brainModel.generateContentStream({
+        contents: [
+          { role: "user", parts: [{ text: systemPrompt }] },
+          { role: "model", parts: [{ text: "Understood. I am Coco. How can I help you today?" }] },
+          ...messages.map((m: { role: string; content: string }) => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }],
+          })),
+        ],
+      });
+
+      stream = new ReadableStream({
+        async start(controller) {
+          for await (const chunk of result.stream) {
+            const text = chunk.text();
+            if (text) {
+              controller.enqueue(
+                `data: ${JSON.stringify({ choices: [{ delta: { content: text }, finish_reason: null, index: 0 }] })}\n\n`
+              );
+            }
+          }
+          controller.enqueue(`data: [DONE]\n\n`);
+          controller.close();
+        },
+      });
+    }
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  } catch (error) {
+    console.error("[voice/llm]", error);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
