@@ -1,9 +1,16 @@
 import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
 import { NavLink } from "@/components/dashboard/NavLink";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, caretaker } = await requireAuthenticatedCaretaker();
+  let auth: Awaited<ReturnType<typeof requireAuthenticatedCaretaker>>;
+  try {
+    auth = await requireAuthenticatedCaretaker();
+  } catch {
+    redirect("/auth/login");
+  }
+  const { supabase, caretaker } = auth;
   const { data: elderlyUsers } = await supabase
     .from("elderly_users")
     .select("id, name, age, nickname")
