@@ -204,7 +204,7 @@ export function ConfigManager({
               <button
                 type="button"
                 onClick={() => setConfig({ ...config, metaphor_mode: !config.metaphor_mode })}
-                className={`relative h-6 w-11 rounded-full transition-colors ${config.metaphor_mode ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
+                className={`relative h-6 w-11 rounded-full overflow-hidden transition-colors ${config.metaphor_mode ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
               >
                 <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.metaphor_mode ? "translate-x-5" : "translate-x-0.5"}`} />
               </button>
@@ -218,7 +218,7 @@ export function ConfigManager({
               <button
                 type="button"
                 onClick={() => setConfig({ ...config, allow_sensitive_flows: !config.allow_sensitive_flows })}
-                className={`relative h-6 w-11 rounded-full transition-colors ${config.allow_sensitive_flows ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
+                className={`relative h-6 w-11 rounded-full overflow-hidden transition-colors ${config.allow_sensitive_flows ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
               >
                 <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.allow_sensitive_flows ? "translate-x-5" : "translate-x-0.5"}`} />
               </button>
