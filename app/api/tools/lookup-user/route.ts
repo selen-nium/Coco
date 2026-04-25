@@ -25,20 +25,23 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
     });
   }
 
-  // 2. Create the active call log
+  // 2. Create or get the active call log (upsert to handle retries/existing logs gracefully)
   const { data: callLog, error: logError } = await supabase
     .from("call_logs")
-    .insert({
-      elderly_user_id: elderlyUser.id,
-      twilio_call_sid: call_sid,
-      status: "in_progress",
-    })
+    .upsert(
+      {
+        elderly_user_id: elderlyUser.id,
+        twilio_call_sid: call_sid,
+        status: "in_progress",
+      },
+      { onConflict: "twilio_call_sid" }
+    )
     .select()
     .single();
 
   if (logError) {
-    console.error("[tools/lookup-user] Failed to create call log:", logError);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error("[tools/lookup-user] Failed to create or update call log:", logError);
+    return NextResponse.json({ error: `Database error: ${logError.message}` }, { status: 500 });
   }
 
   // 3. Fetch recent history for immediate memory
