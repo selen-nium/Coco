@@ -55,17 +55,24 @@ export async function POST(req: NextRequest) {
   // Need to handle the caretaker phone format
   const caretakerPhone = elderlyUser.caretakers?.phone || "Unknown";
 
-  const dynamicVariables = {
-    user_name: elderlyUser.name,
-    metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
-    caretaker_phone: caretakerPhone,
-    call_sid: CallSid,
-    call_log_id: callLog.id,
-    elderly_user_id: elderlyUser.id
+  const clientData = {
+    type: "conversation_initiation_client_data",
+    dynamic_variables: {
+      user_name: elderlyUser.name,
+      metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
+      caretaker_phone: caretakerPhone,
+      call_sid: CallSid,
+      call_log_id: callLog.id,
+      elderly_user_id: elderlyUser.id
+    }
   };
 
-  const dynamicVariablesJson = JSON.stringify(dynamicVariables);
-  const escapedJson = dynamicVariablesJson.replace(/"/g, '&quot;');
+  const customParameters = JSON.stringify({
+    conversation_initiation_client_data: clientData
+  });
+
+  // URL-encode the JSON to safely pass it in TwiML as per ElevenLabs requirements
+  const encodedParameters = encodeURIComponent(customParameters);
   
   const websocketUrl = `wss://api.elevenlabs.io/v1/convai/twilio?agent_id=${ELEVENLABS_AGENT_ID}`;
   const escapedUrl = websocketUrl.replace(/&/g, "&amp;");
@@ -75,13 +82,7 @@ export async function POST(req: NextRequest) {
     <Response>
       <Connect>
         <Stream url="${escapedUrl}">
-          <Parameter name="user_name" value="${elderlyUser.name}" />
-          <Parameter name="metaphor_mode" value="${agentConfig.metaphor_mode ? "true" : "false"}" />
-          <Parameter name="caretaker_phone" value="${caretakerPhone}" />
-          <Parameter name="call_sid" value="${CallSid}" />
-          <Parameter name="call_log_id" value="${callLog.id}" />
-          <Parameter name="elderly_user_id" value="${elderlyUser.id}" />
-          <Parameter name="metadata" value="${escapedJson}" />
+          <Parameter name="custom_parameters" value="${encodedParameters}" />
         </Stream>
       </Connect>
     </Response>`,
