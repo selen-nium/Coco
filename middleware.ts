@@ -30,11 +30,6 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
 
-  // API voice/intelligence routes are called by Twilio/ElevenLabs — no session required
-  const isWebhookRoute =
-    request.nextUrl.pathname.startsWith("/api/voice") ||
-    request.nextUrl.pathname.startsWith("/api/intelligence");
-
   if (!user && !isAuthRoute && !isApiRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";

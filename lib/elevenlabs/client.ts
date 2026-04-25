@@ -5,11 +5,12 @@ const ELEVENLABS_BASE_URL = "https://api.elevenlabs.io/v1";
 
 export const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID!;
 
-export async function createConversationalSession(params: {
+export async function createConversationalSession(_params: {
   agent_id: string;
   phone_number: string;
   call_sid: string;
 }): Promise<{ session_id: string }> {
+  void _params;
   // TODO (Agent 1): implement ElevenLabs session creation
   throw new Error("Not implemented");
 }
@@ -30,6 +31,36 @@ export async function updateAgentConfig(config: {
   repetition_level: number;
   metaphor_mode: boolean;
 }): Promise<void> {
-  // TODO (Agent 1): patch ElevenLabs agent with updated config
-  throw new Error("Not implemented");
+  // Cross-concern patch by Agent 3: the dashboard needs a shared config sync hook.
+  if (!process.env.ELEVENLABS_API_KEY || !ELEVENLABS_AGENT_ID) {
+    return;
+  }
+
+  const response = await fetch(
+    `${ELEVENLABS_BASE_URL}/convai/agents/${ELEVENLABS_AGENT_ID}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        "xi-api-key": process.env.ELEVENLABS_API_KEY,
+      },
+      body: JSON.stringify({
+        conversation_config: {
+          tts: {
+            voice_id: config.voice_id,
+            speed: config.tts_speed,
+          },
+          agent: {
+            prompt: {
+              prompt: `Use repetition level ${config.repetition_level} and metaphor mode ${config.metaphor_mode ? "enabled" : "disabled"}.`,
+            },
+          },
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`ElevenLabs config sync failed: ${response.status}`);
+  }
 }
