@@ -22,6 +22,9 @@ export async function POST(req: NextRequest) {
         caretaker_id: caretaker.id,
         name: payload.name,
         phone: payload.phone,
+        age: payload.age ?? null,
+        nickname: payload.nickname ?? null,
+        phone_model: payload.phone_model ?? null,
         verified: false,
         verification_code: verificationCode,
       })

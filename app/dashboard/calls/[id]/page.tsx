@@ -123,7 +123,7 @@ export default async function CallDetailPage({
               (interventions ?? []).map((item) => (
                 <div key={item.id} className="rounded-2xl border border-slate-200 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <Badge tone={item.type === "scam" ? "critical" : "neutral"}>{item.type}</Badge>
+                    <Badge variant={item.type === "scam" ? "red" : "gray"}>{item.type}</Badge>
                     <span className="text-xs text-slate-500">
                       {new Date(item.triggered_at).toLocaleTimeString()}
                     </span>

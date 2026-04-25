@@ -46,8 +46,8 @@ export function ConfigManager({
   const [linkPhone, setLinkPhone] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [verifyUserId, setVerifyUserId] = useState(selectedElderlyId ?? elderlyUsers[0]?.id ?? "");
-  const [testText, setTestText] = useState("Hi there. Let me walk you through that one step at a time.");
-  const [status, setStatus] = useState<string | null>(null);
+  const [testText, setTestText] = useState("Hi there! Let me walk you through that one step at a time.");
+  const [status, setStatus] = useState<{ text: string; ok: boolean } | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [linking, setLinking] = useState(false);
@@ -57,21 +57,18 @@ export function ConfigManager({
     if (!config || !selectedElderlyId) return;
     setSaving(true);
     setStatus(null);
-    const response = await fetch(`/api/dashboard/config/${selectedElderlyId}`, {
+    const res = await fetch(`/api/dashboard/config/${selectedElderlyId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(config),
     });
-
-    if (response.ok) {
-      const payload = await response.json();
+    const payload = await res.json();
+    if (res.ok) {
       setConfig(payload);
-      setStatus("Configuration saved.");
+      setStatus({ text: "Configuration saved.", ok: true });
     } else {
-      const payload = await response.json();
-      setStatus(payload.error ?? "Unable to save configuration.");
+      setStatus({ text: payload.error ?? "Unable to save configuration.", ok: false });
     }
-
     setSaving(false);
   }
 
@@ -79,23 +76,20 @@ export function ConfigManager({
     event.preventDefault();
     setLinking(true);
     setStatus(null);
-    const response = await fetch("/api/dashboard/elderly", {
+    const res = await fetch("/api/dashboard/elderly", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: linkName, phone: linkPhone }),
     });
-
-    const payload = await response.json();
-    if (response.ok) {
-      setStatus("Code sent. Ask them to reply to the text.");
+    const payload = await res.json();
+    if (res.ok) {
+      setStatus({ text: "Code sent. Ask them to reply to the text.", ok: true });
       setLinkName("");
       setLinkPhone("");
       router.refresh();
-      if (payload.elderly_user_id) {
-        setVerifyUserId(payload.elderly_user_id);
-      }
+      if (payload.elderly_user_id) setVerifyUserId(payload.elderly_user_id);
     } else {
-      setStatus(payload.error ?? "Unable to link user.");
+      setStatus({ text: payload.error ?? "Unable to link user.", ok: false });
     }
     setLinking(false);
   }
@@ -103,18 +97,18 @@ export function ConfigManager({
   async function verifyUser() {
     if (!verifyUserId || !verifyCode.trim()) return;
     setStatus(null);
-    const response = await fetch("/api/dashboard/elderly/verify", {
+    const res = await fetch("/api/dashboard/elderly/verify", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ elderly_user_id: verifyUserId, code: verifyCode }),
     });
-    const payload = await response.json();
-    if (response.ok && payload.verified) {
-      setStatus("User verified.");
+    const payload = await res.json();
+    if (res.ok && payload.verified) {
+      setStatus({ text: "User verified.", ok: true });
       setVerifyCode("");
       router.refresh();
     } else {
-      setStatus(payload.error ?? "Verification code did not match.");
+      setStatus({ text: payload.error ?? "Verification code did not match.", ok: false });
     }
   }
 
@@ -122,252 +116,211 @@ export function ConfigManager({
     if (!config || !selectedElderlyId) return;
     setTesting(true);
     setStatus(null);
-    const response = await fetch("/api/dashboard/test-voice", {
+    const res = await fetch("/api/dashboard/test-voice", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        elderly_user_id: selectedElderlyId,
-        text: testText,
-        config,
-      }),
+      body: JSON.stringify({ elderly_user_id: selectedElderlyId, text: testText, config }),
     });
-
-    if (!response.ok) {
-      const payload = await response.json();
-      setStatus(payload.error ?? "Voice test failed.");
+    if (!res.ok) {
+      const payload = await res.json();
+      setStatus({ text: payload.error ?? "Voice test failed.", ok: false });
       setTesting(false);
       return;
     }
-
-    const audioBlob = await response.blob();
-    const nextUrl = URL.createObjectURL(audioBlob);
-    setAudioUrl((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return nextUrl;
-    });
-    setStatus("Voice sample ready.");
+    const blob = await res.blob();
+    const nextUrl = URL.createObjectURL(blob);
+    setAudioUrl((cur) => { if (cur) URL.revokeObjectURL(cur); return nextUrl; });
+    setStatus({ text: "Voice sample ready.", ok: true });
     setTesting(false);
   }
 
+  const selectClass = "w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-2.5 text-sm text-[#1a1208] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition";
+
   return (
     <div className="space-y-6">
+      {/* Linked users */}
       <Card className="p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Linked Users</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Link an elderly user, then choose who you want to configure.
-            </p>
+            <h2 className="text-base font-semibold text-[#1a1208]">Linked users</h2>
+            <p className="mt-0.5 text-sm text-[#888]">Manage who Coco is looking after.</p>
           </div>
-          {elderlyUsers.length > 0 ? (
+          {elderlyUsers.length > 1 && (
             <select
               value={selectedElderlyId ?? ""}
-              onChange={(event) =>
-                router.push(`/dashboard/config?elderlyId=${event.target.value}`)
-              }
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              onChange={(e) => router.push(`/dashboard/config?elderlyId=${e.target.value}`)}
+              className={selectClass + " max-w-[160px]"}
             >
-              {elderlyUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
+              {elderlyUsers.map((u) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
               ))}
             </select>
-          ) : null}
+          )}
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {elderlyUsers.map((user) => (
-            <div key={user.id} className="rounded-2xl border border-slate-200 p-4">
+            <div key={user.id} className="rounded-xl border border-[#e8e4de] p-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="font-medium text-slate-900">{user.name}</p>
-                <Badge tone={user.verified ? "success" : "high"}>
+                <p className="text-sm font-semibold text-[#1a1208]">{user.name}</p>
+                <Badge variant={user.verified ? "green" : "amber"}>
                   {user.verified ? "Verified" : "Pending"}
                 </Badge>
               </div>
-              <p className="mt-2 text-sm text-slate-500">{user.phone}</p>
+              <p className="mt-1 text-xs text-[#888]">{user.phone}</p>
             </div>
           ))}
+          {elderlyUsers.length === 0 && (
+            <p className="text-sm text-[#888] col-span-2">No users linked yet.</p>
+          )}
         </div>
       </Card>
 
+      {/* Link new user */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Link a New User</h2>
-        <form onSubmit={linkUser} className="mt-4 grid gap-4 md:grid-cols-2">
-          <Input
-            label="Name"
-            value={linkName}
-            onChange={(event) => setLinkName(event.target.value)}
-            placeholder="Grace Lee"
-          />
-          <Input
-            label="Phone"
-            value={linkPhone}
-            onChange={(event) => setLinkPhone(event.target.value)}
-            placeholder="+1 206 555 0199"
-          />
-          <div className="md:col-span-2">
-            <Button type="submit" disabled={linking}>
-              {linking ? "Sending code..." : "Send Verification Code"}
+        <h2 className="text-base font-semibold text-[#1a1208] mb-4">Link a new user</h2>
+        <form onSubmit={linkUser} className="grid gap-4 sm:grid-cols-2">
+          <Input label="Name" value={linkName} onChange={(e) => setLinkName(e.target.value)} placeholder="Harold" />
+          <Input label="Phone" value={linkPhone} onChange={(e) => setLinkPhone(e.target.value)} placeholder="+1 (555) 843-2201" />
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={linking || !linkName || !linkPhone}>
+              {linking ? "Sending…" : "Send verification SMS"}
             </Button>
           </div>
         </form>
       </Card>
 
+      {/* Manual verify */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Manual Verify</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-[1.2fr_1fr_auto]">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">User</span>
+        <h2 className="text-base font-semibold text-[#1a1208] mb-4">Manual verify</h2>
+        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] items-end">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[#1a1208]">User</label>
             <select
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
+              className={selectClass}
               value={verifyUserId}
-              onChange={(event) => setVerifyUserId(event.target.value)}
+              onChange={(e) => setVerifyUserId(e.target.value)}
             >
               <option value="">Select a user</option>
-              {elderlyUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
+              {elderlyUsers.map((u) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
               ))}
             </select>
-          </label>
+          </div>
           <Input
-            label="Verification Code"
+            label="Verification code"
             value={verifyCode}
-            onChange={(event) => setVerifyCode(event.target.value)}
+            onChange={(e) => setVerifyCode(e.target.value)}
             placeholder="123456"
           />
-          <div className="flex items-end">
-            <Button onClick={() => void verifyUser()} type="button">
-              Verify
-            </Button>
-          </div>
+          <Button type="button" onClick={() => void verifyUser()} disabled={!verifyUserId || !verifyCode}>
+            Verify
+          </Button>
         </div>
       </Card>
 
+      {/* Agent config */}
       {!config ? (
         <Card className="p-6">
-          <p className="text-sm text-slate-500">
-            Link an elderly user first to unlock voice configuration.
-          </p>
+          <p className="text-sm text-[#888]">Link a user first to unlock agent configuration.</p>
         </Card>
       ) : (
         <Card className="p-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Agent Configuration</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Tune how the voice agent explains, repeats, and teaches.
-              </p>
+              <h2 className="text-base font-semibold text-[#1a1208]">Agent configuration</h2>
+              <p className="mt-0.5 text-sm text-[#888]">Tune voice, pacing, and teaching style.</p>
             </div>
             <Button onClick={() => void saveConfig()} disabled={saving}>
-              {saving ? "Saving..." : "Save Config"}
+              {saving ? "Saving…" : "Save"}
             </Button>
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Voice</span>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[#1a1208]">Voice</label>
               <select
                 value={config.elevenlabs_voice_id}
-                onChange={(event) =>
-                  setConfig({ ...config, elevenlabs_voice_id: event.target.value })
-                }
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
+                onChange={(e) => setConfig({ ...config, elevenlabs_voice_id: e.target.value })}
+                className={selectClass}
               >
-                {(voices.length ? voices : [{ voice_id: "default", name: "Default Voice" }]).map(
-                  (voice) => (
-                    <option key={voice.voice_id} value={voice.voice_id}>
-                      {voice.name}
-                    </option>
-                  )
-                )}
+                {(voices.length ? voices : [{ voice_id: "default", name: "Default Voice" }]).map((v) => (
+                  <option key={v.voice_id} value={v.voice_id}>{v.name}</option>
+                ))}
               </select>
-            </label>
+            </div>
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                TTS Speed: {config.tts_speed.toFixed(1)}x
-              </span>
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.1"
-                value={config.tts_speed}
-                onChange={(event) =>
-                  setConfig({ ...config, tts_speed: Number(event.target.value) })
-                }
-                className="w-full"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
-                Repetition Level: {config.repetition_level}
-              </span>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={config.repetition_level}
-                onChange={(event) =>
-                  setConfig({
-                    ...config,
-                    repetition_level: Number(event.target.value),
-                  })
-                }
-                className="w-full"
-              />
-            </label>
-
-            <label className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
-              <div>
-                <p className="text-sm font-medium text-slate-900">Metaphor Mode</p>
-                <p className="text-sm text-slate-500">
-                  Use friendly analogies to explain technical steps.
-                </p>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[#1a1208]">Speaking speed</label>
+                <span className="text-sm font-medium text-[#e8733b]">{config.tts_speed.toFixed(1)}x</span>
               </div>
               <input
-                type="checkbox"
-                checked={config.metaphor_mode}
-                onChange={(event) =>
-                  setConfig({ ...config, metaphor_mode: event.target.checked })
-                }
-                className="h-5 w-5 accent-emerald-600"
+                type="range" min="0.5" max="1.5" step="0.1"
+                value={config.tts_speed}
+                onChange={(e) => setConfig({ ...config, tts_speed: Number(e.target.value) })}
+                className="w-full accent-[#e8733b]"
               />
-            </label>
+              <div className="flex justify-between">
+                <span className="text-xs text-[#888]">Slower</span>
+                <span className="text-xs text-[#888]">Faster</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-[#1a1208]">Repetition level</label>
+                <span className="text-sm font-medium text-[#e8733b]">{config.repetition_level}</span>
+              </div>
+              <input
+                type="range" min="1" max="5" step="1"
+                value={config.repetition_level}
+                onChange={(e) => setConfig({ ...config, repetition_level: Number(e.target.value) })}
+                className="w-full accent-[#e8733b]"
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-[#e8e4de] px-4 py-4">
+              <div>
+                <p className="text-sm font-semibold text-[#1a1208]">Metaphor-Teaching Mode</p>
+                <p className="text-xs text-[#888] mt-0.5">"Think of this like your TV remote…"</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, metaphor_mode: !config.metaphor_mode })}
+                className={`relative h-6 w-11 rounded-full transition-colors ${config.metaphor_mode ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
+              >
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.metaphor_mode ? "translate-x-5" : "translate-x-0.5"}`} />
+              </button>
+            </div>
           </div>
 
-          <div className="mt-8 space-y-4 rounded-2xl bg-slate-50 p-4">
+          {/* Voice test */}
+          <div className="mt-6 rounded-xl bg-[#f5f4f0] p-4 space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Live Test Chatbox</p>
-                <p className="text-sm text-slate-500">
-                  Send a sample prompt and preview the current voice.
-                </p>
+                <p className="text-sm font-semibold text-[#1a1208]">Test agent voice</p>
+                <p className="text-xs text-[#888] mt-0.5">Preview how Coco will sound with your settings.</p>
               </div>
-              <Button type="button" variant="secondary" onClick={() => void testVoice()} disabled={testing}>
-                {testing ? "Generating..." : "Generate Sample"}
+              <Button variant="outline" type="button" onClick={() => void testVoice()} disabled={testing}>
+                {testing ? "Generating…" : "Play sample"}
               </Button>
             </div>
             <textarea
               value={testText}
-              onChange={(event) => setTestText(event.target.value)}
-              rows={4}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-500"
+              onChange={(e) => setTestText(e.target.value)}
+              rows={3}
+              className="w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-3 text-sm text-[#1a1208] placeholder:text-[#bbb] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition resize-none"
             />
-            {audioUrl ? <audio controls src={audioUrl} className="w-full" /> : null}
+            {audioUrl && <audio controls src={audioUrl} className="w-full" />}
           </div>
         </Card>
       )}
 
-      {status ? (
-        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {status}
-        </p>
-      ) : null}
+      {status && (
+        <div className={`rounded-xl px-4 py-3 text-sm ${status.ok ? "bg-[#e8f3ee] text-[#2d6a4f]" : "bg-red-50 text-red-700"}`}>
+          {status.text}
+        </div>
+      )}
     </div>
   );
 }

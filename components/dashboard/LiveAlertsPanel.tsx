@@ -69,7 +69,7 @@ export function LiveAlertsPanel({ initialAlerts }: { initialAlerts: AlertItem[] 
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge tone={alert.severity}>{alert.severity.toUpperCase()}</Badge>
+                <Badge variant={alert.severity === "critical" ? "red" : "amber"}>{alert.severity.toUpperCase()}</Badge>
                 <span className="text-sm font-semibold text-rose-800">
                   Potential scam detected for {alert.elderly_user.name}
                 </span>

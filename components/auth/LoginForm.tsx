@@ -66,16 +66,16 @@ export function LoginForm() {
         autoComplete="current-password"
       />
       {errors.form ? (
-        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
           {errors.form}
         </p>
       ) : null}
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Signing in..." : "Sign In"}
       </Button>
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-[#888]">
         New to Coco?{" "}
-        <Link href="/auth/signup" className="font-medium text-emerald-700">
+        <Link href="/auth/signup" className="font-medium text-[#e8733b] hover:underline">
           Create an account
         </Link>
       </p>

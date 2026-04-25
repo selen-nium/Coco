@@ -77,7 +77,7 @@ export function AlertsList({ initialAlerts }: { initialAlerts: AlertRecord[] }) 
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge tone={alert.severity}>{alert.severity.toUpperCase()}</Badge>
+                <Badge variant={alert.severity === "critical" ? "red" : "amber"}>{alert.severity.toUpperCase()}</Badge>
                 <p className="text-sm font-semibold text-slate-900">{alert.elderly_user.name}</p>
               </div>
               <p className="text-sm text-slate-600">
@@ -88,7 +88,7 @@ export function AlertsList({ initialAlerts }: { initialAlerts: AlertRecord[] }) 
               </p>
             </div>
             <Button
-              variant="secondary"
+              variant="outline"
               disabled={busyId === alert.id}
               onClick={() => void dismissAlert(alert.id)}
             >

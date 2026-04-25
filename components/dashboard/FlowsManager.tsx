@@ -150,7 +150,7 @@ export function FlowsManager({ initialFlows }: { initialFlows: Flow[] }) {
                   <div className="flex gap-2">
                     {flow.caretaker_id ? (
                       <>
-                        <Button variant="secondary" onClick={() => openEdit(flow)}>
+                        <Button variant="outline" onClick={() => openEdit(flow)}>
                           Edit
                         </Button>
                         <Button variant="danger" onClick={() => void deleteFlow(flow.id)}>
@@ -219,7 +219,7 @@ export function FlowsManager({ initialFlows }: { initialFlows: Flow[] }) {
                 />
               </label>
               <div className="flex justify-end gap-3">
-                <Button variant="secondary" type="button" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit">{editingFlowId ? "Update Flow" : "Create Flow"}</Button>

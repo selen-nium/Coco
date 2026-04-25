@@ -8,6 +8,9 @@ export const caretakerUpdateSchema = z.object({
 export const elderlyLinkSchema = z.object({
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(7).max(40),
+  age: z.number().int().min(1).max(120).optional(),
+  nickname: z.string().trim().max(60).optional(),
+  phone_model: z.string().trim().max(120).optional(),
 });
 
 export const elderlyVerifySchema = z.object({

@@ -3,9 +3,12 @@ import type { IngestedFlow } from "@/types/db";
 export function buildGuidanceSystemPrompt(
   elderlyName: string,
   config: { metaphor_mode: boolean; tts_speed: number; repetition_level: number },
-  flow: IngestedFlow | null
+  flow: IngestedFlow | null,
+  phoneModel?: string | null
 ): string {
-  return `You are Coco, a warm and patient AI assistant helping ${elderlyName} with their smartphone.
+  return `You are Coco, a warm and patient AI assistant helping ${elderlyName} with their smartphone${phoneModel ? ` (${phoneModel})` : ""}.
+${phoneModel ? `DEVICE: The user is using a ${phoneModel}. Tailor all button locations, gestures, and UI descriptions specifically to this device. For example, describe where physical buttons are, whether there's a notch or dynamic island, and use the correct terminology for this OS.` : ""}
+
 
 BEHAVIORAL RULES:
 - Speak slowly and clearly. Never express frustration. Praise every completed step.

@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function NavLink({ href, label }: { href: string; label: string }) {
+export function NavLink({ href, label, exact }: { href: string; label: string; exact?: boolean }) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = exact ? pathname === href : pathname.startsWith(href);
 
   return (
     <Link
       href={href}
-      className={`rounded-2xl px-3 py-2 text-sm font-medium transition ${
+      className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
         isActive
-          ? "bg-emerald-600 text-white shadow-sm"
-          : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-800"
+          ? "bg-[#e8733b] text-white"
+          : "text-[#8a7a6a] hover:bg-white/6 hover:text-white"
       }`}
     >
       {label}

@@ -1,34 +1,26 @@
 "use client";
+import { ButtonHTMLAttributes, forwardRef } from "react";
 
-import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
-
-type ButtonProps = PropsWithChildren<
-  ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: "primary" | "secondary" | "ghost" | "danger";
-  }
->;
-
-const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary:
-    "bg-emerald-600 text-white hover:bg-emerald-500 disabled:bg-emerald-300",
-  secondary:
-    "bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 disabled:text-slate-400",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100 disabled:text-slate-400",
-  danger: "bg-rose-600 text-white hover:bg-rose-500 disabled:bg-rose-300",
-};
-
-export function Button({
-  children,
-  className = "",
-  variant = "primary",
-  ...props
-}: ButtonProps) {
-  return (
-    <button
-      className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "ghost" | "outline" | "danger";
+  size?: "sm" | "md" | "lg";
 }
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "primary", size = "md", className = "", children, ...props }, ref) => {
+    const base = "inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+    const variants = {
+      primary: "bg-[#e8733b] text-white hover:bg-[#d4652f] active:scale-[0.98]",
+      ghost: "text-[#6b6b6b] hover:bg-[#f0ede8]",
+      outline: "border border-[#e8e4de] text-[#1a1208] hover:bg-[#f5f4f0]",
+      danger: "bg-red-500 text-white hover:bg-red-600",
+    };
+    const sizes = { sm: "text-xs px-3 py-1.5", md: "text-sm px-5 py-2.5", lg: "text-base px-6 py-3" };
+    return (
+      <button ref={ref} className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+        {children}
+      </button>
+    );
+  }
+);
+Button.displayName = "Button";

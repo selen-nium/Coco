@@ -1,23 +1,32 @@
-import type { InputHTMLAttributes } from "react";
+"use client";
+import { InputHTMLAttributes, forwardRef } from "react";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & {
-  label: string;
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  hint?: string;
   error?: string;
-};
-
-export function Input({ label, error, className = "", ...props }: InputProps) {
-  return (
-    <label className="block space-y-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <input
-        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition placeholder:text-slate-400 ${
-          error
-            ? "border-rose-300 bg-rose-50 focus:border-rose-500"
-            : "border-slate-200 bg-white focus:border-emerald-500"
-        } ${className}`}
-        {...props}
-      />
-      {error ? <span className="text-xs text-rose-600">{error}</span> : null}
-    </label>
-  );
 }
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, hint, error, className = "", id, ...props }, ref) => {
+    const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
+    return (
+      <div className="flex flex-col gap-1.5">
+        {label && (
+          <label htmlFor={inputId} className="text-sm font-medium text-[#1a1208]">
+            {label}
+          </label>
+        )}
+        <input
+          ref={ref}
+          id={inputId}
+          className={`w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-3 text-sm text-[#1a1208] placeholder:text-[#bbb] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition ${error ? "border-red-400" : ""} ${className}`}
+          {...props}
+        />
+        {hint && !error && <p className="text-xs text-[#888]">{hint}</p>}
+        {error && <p className="text-xs text-red-500">{error}</p>}
+      </div>
+    );
+  }
+);
+Input.displayName = "Input";

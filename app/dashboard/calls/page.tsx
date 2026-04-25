@@ -1,114 +1,171 @@
 import Link from "next/link";
 import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 
 function formatDuration(value: number | null) {
   if (!value) return "—";
-  const minutes = Math.floor(value / 60);
-  const seconds = value % 60;
-  return `${minutes}m ${seconds}s`;
+  const m = Math.floor(value / 60);
+  const s = value % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
+
+type FilterTab = "all" | "completed" | "scam_blocked" | "three_loop";
+
+const TABS: { id: FilterTab; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "completed", label: "Completed" },
+  { id: "scam_blocked", label: "Scam Blocked" },
+  { id: "three_loop", label: "3-Loop Triggered" },
+];
 
 export default async function CallsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; tab?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, tab: tabParam } = await searchParams;
   const page = Math.max(Number(pageParam ?? "1") || 1, 1);
-  const limit = 10;
+  const activeTab = (TABS.find((t) => t.id === tabParam)?.id ?? "all") as FilterTab;
+  const limit = 20;
   const from = (page - 1) * limit;
   const to = from + limit - 1;
+
   const { supabase, caretaker } = await requireAuthenticatedCaretaker();
   const { data: elderlyUsers } = await supabase
     .from("elderly_users")
     .select("id")
     .eq("caretaker_id", caretaker.id);
 
-  const elderlyIds = (elderlyUsers ?? []).map((user) => user.id);
-  const { data: calls, count } =
+  const elderlyIds = (elderlyUsers ?? []).map((u) => u.id);
+
+  let query =
     elderlyIds.length > 0
-      ? await supabase
+      ? supabase
           .from("call_logs")
           .select(
-            `
-              *,
-              elderly_user:elderly_users!call_logs_elderly_user_id_fkey(name),
-              flow:ingested_flows!call_logs_flow_id_fkey(name, app)
-            `,
+            `*, elderly_user:elderly_users!call_logs_elderly_user_id_fkey(name),
+             flow:ingested_flows!call_logs_flow_id_fkey(name, app)`,
             { count: "exact" }
           )
           .in("elderly_user_id", elderlyIds)
           .order("started_at", { ascending: false })
-          .range(from, to)
-      : { data: [], count: 0 };
+      : null;
 
-  const callIds = (calls ?? []).map((call) => call.id);
+  if (query && activeTab === "completed") query = query.eq("status", "completed");
+  if (query && activeTab === "scam_blocked") query = query.eq("status", "scam_blocked");
+  if (query && activeTab === "three_loop") query = query.eq("three_loop_triggered", true);
+
+  const { data: calls, count } = query
+    ? await query.range(from, to)
+    : { data: [], count: 0 };
+
+  const callIds = (calls ?? []).map((c) => c.id);
   const { data: interventionRows } =
     callIds.length > 0
-      ? await supabase.from("intervention_logs").select("call_log_id").in("call_log_id", callIds)
+      ? await supabase
+          .from("intervention_logs")
+          .select("call_log_id")
+          .in("call_log_id", callIds)
       : { data: [] };
 
-  const counts = new Map<string, number>();
+  const interventionCounts = new Map<string, number>();
   for (const row of interventionRows ?? []) {
-    counts.set(row.call_log_id, (counts.get(row.call_log_id) ?? 0) + 1);
+    interventionCounts.set(row.call_log_id, (interventionCounts.get(row.call_log_id) ?? 0) + 1);
   }
 
   const normalizedCalls = (calls ?? []).map((call) => ({
     ...call,
-    elderly_user: Array.isArray(call.elderly_user)
-      ? call.elderly_user[0]
-      : call.elderly_user,
+    elderly_user: Array.isArray(call.elderly_user) ? call.elderly_user[0] : call.elderly_user,
     flow: Array.isArray(call.flow) ? call.flow[0] : call.flow,
   }));
 
   const totalPages = Math.max(Math.ceil((count ?? 0) / limit), 1);
 
+  function tabHref(id: FilterTab) {
+    return `/dashboard/calls?tab=${id}&page=1`;
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium uppercase tracking-[0.25em] text-cyan-700">
-          Call History
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold text-slate-900">Recent conversations</h1>
+        <h1 className="text-3xl font-bold text-[#1a1208]">Call History</h1>
+        <p className="mt-1 text-sm text-[#888]">All calls routed through Coco for your linked users.</p>
       </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-1 rounded-xl bg-[#e8e4de]/40 p-1 w-fit">
+        {TABS.map((tab) => (
+          <Link
+            key={tab.id}
+            href={tabHref(tab.id)}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+              activeTab === tab.id
+                ? "bg-white text-[#1a1208] shadow-sm"
+                : "text-[#888] hover:text-[#1a1208]"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50">
+          <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
             <tr>
-              {["Date", "Duration", "Intent / App", "Summary", "Interventions"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-medium text-slate-500">
+              {["Date & Time", "Duration", "App / Intent", "Status", "Loops"].map((h) => (
+                <th key={h} className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#e8e4de]">
             {normalizedCalls.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                  No calls yet.
+                <td colSpan={5} className="px-5 py-10 text-center text-[#888] text-sm">
+                  No calls found.
                 </td>
               </tr>
             ) : (
               normalizedCalls.map((call) => (
-                <tr key={call.id} className="border-t border-slate-100 hover:bg-slate-50/70">
-                  <td className="px-4 py-4 text-slate-600">
-                    <Link href={`/dashboard/calls/${call.id}`} className="font-medium text-slate-900">
-                      {new Date(call.started_at).toLocaleString()}
+                <tr key={call.id} className="hover:bg-[#f5f4f0] transition-colors">
+                  <td className="px-5 py-3.5">
+                    <Link
+                      href={`/dashboard/calls/${call.id}`}
+                      className="font-medium text-[#1a1208] hover:text-[#e8733b] transition-colors"
+                    >
+                      {new Date(call.started_at).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                     </Link>
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
-                    {formatDuration(call.duration_seconds)}
+                  <td className="px-5 py-3.5 text-[#666]">{formatDuration(call.duration_seconds)}</td>
+                  <td className="px-5 py-3.5 text-[#666]">
+                    {call.flow?.app ?? call.intent_text ?? "—"}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
-                    {call.flow?.app ?? call.intent_text ?? "Unknown"}
+                  <td className="px-5 py-3.5">
+                    <Badge
+                      variant={
+                        call.status === "completed"
+                          ? "green"
+                          : call.status === "scam_blocked"
+                          ? "red"
+                          : call.status === "three_loop_triggered"
+                          ? "amber"
+                          : "gray"
+                      }
+                    >
+                      {call.status ?? "unknown"}
+                    </Badge>
                   </td>
-                  <td className="max-w-md px-4 py-4 text-slate-600">
-                    {call.summary ?? "Summary pending"}
-                  </td>
-                  <td className="px-4 py-4 text-slate-600">
-                    {counts.get(call.id) ?? 0}
+                  <td className="px-5 py-3.5 text-[#666]">
+                    {interventionCounts.get(call.id) ?? 0}
                   </td>
                 </tr>
               ))
@@ -116,29 +173,31 @@ export default async function CallsPage({
           </tbody>
         </table>
       </Card>
+
+      {/* Pagination */}
       <div className="flex items-center justify-between">
         <Link
-          href={`/dashboard/calls?page=${Math.max(page - 1, 1)}`}
-          className={`rounded-xl px-4 py-2 text-sm ${
+          href={`/dashboard/calls?tab=${activeTab}&page=${Math.max(page - 1, 1)}`}
+          className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
             page === 1
-              ? "pointer-events-none bg-slate-100 text-slate-400"
-              : "bg-white text-slate-700 ring-1 ring-slate-200"
+              ? "pointer-events-none border-transparent bg-[#e8e4de] text-[#bbb]"
+              : "border-[#e8e4de] bg-white text-[#1a1208] hover:border-[#e8733b] hover:text-[#e8733b]"
           }`}
         >
-          Previous
+          ← Previous
         </Link>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-[#888]">
           Page {page} of {totalPages}
         </p>
         <Link
-          href={`/dashboard/calls?page=${Math.min(page + 1, totalPages)}`}
-          className={`rounded-xl px-4 py-2 text-sm ${
+          href={`/dashboard/calls?tab=${activeTab}&page=${Math.min(page + 1, totalPages)}`}
+          className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
             page >= totalPages
-              ? "pointer-events-none bg-slate-100 text-slate-400"
-              : "bg-white text-slate-700 ring-1 ring-slate-200"
+              ? "pointer-events-none border-transparent bg-[#e8e4de] text-[#bbb]"
+              : "border-[#e8e4de] bg-white text-[#1a1208] hover:border-[#e8733b] hover:text-[#e8733b]"
           }`}
         >
-          Next
+          Next →
         </Link>
       </div>
     </div>

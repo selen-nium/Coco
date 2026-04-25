@@ -53,6 +53,9 @@ export interface MoodPayload {
 export interface LinkElderlyPayload {
   name: string;
   phone: string;
+  age?: number;
+  nickname?: string;
+  phone_model?: string;
 }
 
 export interface VerifyElderlyPayload {

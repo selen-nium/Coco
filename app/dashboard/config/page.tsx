@@ -55,12 +55,8 @@ export default async function ConfigPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium uppercase tracking-[0.25em] text-emerald-700">
-          Configuration
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold text-slate-900">
-          Tune the AI agent for each linked user
-        </h1>
+        <h1 className="text-3xl font-bold text-[#1a1208]">Settings</h1>
+        <p className="mt-1 text-sm text-[#888]">Configure Coco&apos;s voice and behavior for your linked users.</p>
       </div>
 
       <ConfigManager

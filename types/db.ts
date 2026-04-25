@@ -25,6 +25,9 @@ export interface ElderlyUser {
   phone: string;
   verified: boolean;
   verification_code: string | null;
+  age: number | null;
+  nickname: string | null;
+  phone_model: string | null;
   created_at: string;
 }
 
