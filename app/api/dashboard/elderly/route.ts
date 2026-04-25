@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
+      console.error("[api/dashboard/elderly POST] DB error:", JSON.stringify(error));
       throw error;
     }
 
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.error("[api/dashboard/elderly POST] Unhandled error:", error);
     return responseForError(error);
   }
 }
