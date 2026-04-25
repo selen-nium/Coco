@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
 
 type ElderlyUser = {
   id: string;
@@ -42,16 +41,13 @@ export function ConfigManager({
 }) {
   const router = useRouter();
   const [config, setConfig] = useState<Config | null>(initialConfig);
-  const [linkName, setLinkName] = useState("");
-  const [linkPhone, setLinkPhone] = useState("");
-  const [verifyCode, setVerifyCode] = useState("");
-  const [verifyUserId, setVerifyUserId] = useState(selectedElderlyId ?? elderlyUsers[0]?.id ?? "");
   const [testText, setTestText] = useState("Hi there! Let me walk you through that one step at a time.");
   const [status, setStatus] = useState<{ text: string; ok: boolean } | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [linking, setLinking] = useState(false);
   const [testing, setTesting] = useState(false);
+
+  const selectClass = "w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-2.5 text-sm text-[#1a1208] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition";
 
   async function saveConfig() {
     if (!config || !selectedElderlyId) return;
@@ -70,46 +66,6 @@ export function ConfigManager({
       setStatus({ text: payload.error ?? "Unable to save configuration.", ok: false });
     }
     setSaving(false);
-  }
-
-  async function linkUser(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLinking(true);
-    setStatus(null);
-    const res = await fetch("/api/dashboard/elderly", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: linkName, phone: linkPhone }),
-    });
-    const payload = await res.json();
-    if (res.ok) {
-      setStatus({ text: "Code sent. Ask them to reply to the text.", ok: true });
-      setLinkName("");
-      setLinkPhone("");
-      router.refresh();
-      if (payload.elderly_user_id) setVerifyUserId(payload.elderly_user_id);
-    } else {
-      setStatus({ text: payload.error ?? "Unable to link user.", ok: false });
-    }
-    setLinking(false);
-  }
-
-  async function verifyUser() {
-    if (!verifyUserId || !verifyCode.trim()) return;
-    setStatus(null);
-    const res = await fetch("/api/dashboard/elderly/verify", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ elderly_user_id: verifyUserId, code: verifyCode }),
-    });
-    const payload = await res.json();
-    if (res.ok && payload.verified) {
-      setStatus({ text: "User verified.", ok: true });
-      setVerifyCode("");
-      router.refresh();
-    } else {
-      setStatus({ text: payload.error ?? "Verification code did not match.", ok: false });
-    }
   }
 
   async function testVoice() {
@@ -134,16 +90,14 @@ export function ConfigManager({
     setTesting(false);
   }
 
-  const selectClass = "w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-2.5 text-sm text-[#1a1208] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition";
-
   return (
     <div className="space-y-6">
-      {/* Linked users */}
+      {/* Linked users — read only */}
       <Card className="p-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 className="text-base font-semibold text-[#1a1208]">Linked users</h2>
-            <p className="mt-0.5 text-sm text-[#888]">Manage who Coco is looking after.</p>
+            <p className="mt-0.5 text-sm text-[#888]">Users Coco is currently looking after.</p>
           </div>
           {elderlyUsers.length > 1 && (
             <select
@@ -170,58 +124,17 @@ export function ConfigManager({
             </div>
           ))}
           {elderlyUsers.length === 0 && (
-            <p className="text-sm text-[#888] col-span-2">No users linked yet.</p>
+            <p className="text-sm text-[#888] col-span-2">
+              No users linked yet. Complete onboarding to link your first user.
+            </p>
           )}
-        </div>
-      </Card>
-
-      {/* Link new user */}
-      <Card className="p-6">
-        <h2 className="text-base font-semibold text-[#1a1208] mb-4">Link a new user</h2>
-        <form onSubmit={linkUser} className="grid gap-4 sm:grid-cols-2">
-          <Input label="Name" value={linkName} onChange={(e) => setLinkName(e.target.value)} placeholder="Harold" />
-          <Input label="Phone" value={linkPhone} onChange={(e) => setLinkPhone(e.target.value)} placeholder="+1 (555) 843-2201" />
-          <div className="sm:col-span-2">
-            <Button type="submit" disabled={linking || !linkName || !linkPhone}>
-              {linking ? "Sending…" : "Send verification SMS"}
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      {/* Manual verify */}
-      <Card className="p-6">
-        <h2 className="text-base font-semibold text-[#1a1208] mb-4">Manual verify</h2>
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] items-end">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-[#1a1208]">User</label>
-            <select
-              className={selectClass}
-              value={verifyUserId}
-              onChange={(e) => setVerifyUserId(e.target.value)}
-            >
-              <option value="">Select a user</option>
-              {elderlyUsers.map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </select>
-          </div>
-          <Input
-            label="Verification code"
-            value={verifyCode}
-            onChange={(e) => setVerifyCode(e.target.value)}
-            placeholder="123456"
-          />
-          <Button type="button" onClick={() => void verifyUser()} disabled={!verifyUserId || !verifyCode}>
-            Verify
-          </Button>
         </div>
       </Card>
 
       {/* Agent config */}
       {!config ? (
         <Card className="p-6">
-          <p className="text-sm text-[#888]">Link a user first to unlock agent configuration.</p>
+          <p className="text-sm text-[#888]">No linked user selected. Agent settings will appear here once a user is linked.</p>
         </Card>
       ) : (
         <Card className="p-6">
@@ -277,6 +190,10 @@ export function ConfigManager({
                 onChange={(e) => setConfig({ ...config, repetition_level: Number(e.target.value) })}
                 className="w-full accent-[#e8733b]"
               />
+              <div className="flex justify-between">
+                <span className="text-xs text-[#888]">Less repetition</span>
+                <span className="text-xs text-[#888]">More repetition</span>
+              </div>
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#e8e4de] px-4 py-4">
@@ -290,6 +207,20 @@ export function ConfigManager({
                 className={`relative h-6 w-11 rounded-full transition-colors ${config.metaphor_mode ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
               >
                 <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.metaphor_mode ? "translate-x-5" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-[#e8e4de] px-4 py-4">
+              <div>
+                <p className="text-sm font-semibold text-[#1a1208]">Allow sensitive flows</p>
+                <p className="text-xs text-[#888] mt-0.5">Banking, medical, and legal guidance.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfig({ ...config, allow_sensitive_flows: !config.allow_sensitive_flows })}
+                className={`relative h-6 w-11 rounded-full transition-colors ${config.allow_sensitive_flows ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
+              >
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.allow_sensitive_flows ? "translate-x-5" : "translate-x-0.5"}`} />
               </button>
             </div>
           </div>
