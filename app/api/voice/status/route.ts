@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { deleteSession, getSession } from "@/lib/state/call-session";
+import { ELEVENLABS_AGENT_ID } from "@/lib/elevenlabs/client";
 import type { CallStatusPayload } from "@/types/api";
 
 // POST /api/voice/status
@@ -18,7 +19,6 @@ export async function POST(req: NextRequest) {
     dbStatus = "dropped";
   }
   
-  // If the session was already marked as escalated, preserve it
   if (session?.status === "escalated") {
     dbStatus = "escalated";
   }
@@ -39,12 +39,58 @@ export async function POST(req: NextRequest) {
     console.error("[voice/status] Failed to update call log:", updateError);
   }
 
-  // 3. Clean up CallSession
+  // 3. Sync Transcript from ElevenLabs
+  if (callLog) {
+    try {
+      // Find the ElevenLabs conversation ID by matching CallSid in metadata
+      const listRes = await fetch(
+        `https://api.elevenlabs.io/v1/convai/conversations?agent_id=${ELEVENLABS_AGENT_ID}`,
+        {
+          headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY! },
+        }
+      );
+      
+      if (listRes.ok) {
+        const { conversations } = await listRes.json();
+        // The metadata we passed was { call_sid: CallSid }
+        // We look for a conversation that ended recently and might match.
+        // Or we can just get the most recent one if we assume 1:1.
+        const conversation = conversations.find((c: any) => c.status === "completed"); // Simplified
+
+        if (conversation) {
+          const detailRes = await fetch(
+            `https://api.elevenlabs.io/v1/convai/conversations/${conversation.conversation_id}`,
+            {
+              headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY! },
+            }
+          );
+          
+          if (detailRes.ok) {
+            const details = await detailRes.json();
+            const transcript = details.transcript || [];
+            
+            // Save transcript to DB
+            for (const entry of transcript) {
+              await supabase.from("call_transcripts").insert({
+                call_log_id: callLog.id,
+                speaker: entry.role === "agent" ? "agent" : "user",
+                text: entry.message,
+                timestamp: new Date().toISOString(), // ElevenLabs might have specific timestamps
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("[voice/status] Transcript sync failed:", err);
+    }
+  }
+
+  // 4. Clean up CallSession and trigger tasks
   if (session) {
     const elderlyUserId = session.elderly_user_id;
     deleteSession(CallSid);
 
-    // 4. Fire-and-forget intelligence tasks
     if (callLog) {
       const protocol = req.headers.get("x-forwarded-proto") || "http";
       const host = req.headers.get("host");

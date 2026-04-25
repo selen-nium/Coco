@@ -65,26 +65,17 @@ export async function POST(req: NextRequest) {
     repetition_level: 2,
   };
 
-  const initialPrompt = buildGuidanceSystemPrompt(elderlyUser.name, {
-    metaphor_mode: agentConfig.metaphor_mode,
-    tts_speed: agentConfig.tts_speed,
-    repetition_level: agentConfig.repetition_level,
-  }, null);
+  // SHORTENED PROMPT for URL length safety
+  const initialPrompt = `You are Coco, helping ${elderlyUser.name} with their phone. Speak slowly. Use metaphors: ${agentConfig.metaphor_mode}.`;
 
   const overrides = {
     agent: {
       first_message: `Hi ${elderlyUser.name}, it's Coco. How can I help you today?`,
-      prompt: {
-        prompt: initialPrompt,
-      },
-      metadata: {
-        call_sid: CallSid,
-      },
+      prompt: { prompt: initialPrompt },
     },
     tts: {
-      voice_id: agentConfig.elevenlabs_voice_id,
-      speed: agentConfig.tts_speed,
-    },
+      voice_id: agentConfig.elevenlabs_voice_id === "default" ? undefined : agentConfig.elevenlabs_voice_id,
+    }
   };
 
   const { websocket_url } = await createConversationalSession({
@@ -94,12 +85,15 @@ export async function POST(req: NextRequest) {
     agent_config_override: overrides,
   });
 
+  const escaped_url = websocket_url.replace(/&/g, "&amp;");
+  console.log("[voice/inbound] WebSocket URL Length:", escaped_url.length);
+
   // 6. Return TwiML <Connect><Stream> pointing to ElevenLabs
   return new NextResponse(
     `<?xml version="1.0" encoding="UTF-8"?>
     <Response>
       <Connect>
-        <Stream url="${websocket_url}" />
+        <Stream url="${escaped_url}" />
       </Connect>
     </Response>`,
     { headers: { "Content-Type": "text/xml" } }

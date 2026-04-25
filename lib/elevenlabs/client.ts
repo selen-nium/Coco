@@ -9,13 +9,17 @@ export async function createConversationalSession(params: {
   agent_id: string;
   phone_number: string;
   call_sid: string;
-  agent_config_override?: Record<string, unknown>;
+  agent_config_override?: Record<string, any>;
 }): Promise<{ session_id: string; websocket_url: string }> {
   const agent_id = params.agent_id || ELEVENLABS_AGENT_ID;
 
+  // Direct WebSocket URL for Twilio. 
+  // Note: For private agents, a signed URL is required. 
+  // If this fails, the agent must be set to "Public" in ElevenLabs dashboard
+  // or we must use a signed URL while ensuring Twilio doesn't strip params.
   let websocket_url = `wss://api.elevenlabs.io/v1/convai/twilio?agent_id=${agent_id}`;
 
-  if (params.agent_config_override) {
+  if (params.agent_config_override && Object.keys(params.agent_config_override).length > 0) {
     const config_base64 = Buffer.from(
       JSON.stringify(params.agent_config_override)
     ).toString("base64");
