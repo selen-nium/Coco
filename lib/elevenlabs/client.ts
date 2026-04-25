@@ -9,19 +9,24 @@ export async function createConversationalSession(params: {
   agent_id: string;
   phone_number: string;
   call_sid: string;
-}): Promise<{ session_id: string }> {
-  // TODO (Agent 1): implement ElevenLabs session creation
-  throw new Error("Not implemented");
-}
+  agent_config_override?: any;
+}): Promise<{ session_id: string; websocket_url: string }> {
+  const agent_id = params.agent_id || ELEVENLABS_AGENT_ID;
+  
+  let websocket_url = `wss://api.elevenlabs.io/v1/convai/twilio?agent_id=${agent_id}`;
+  
+  if (params.agent_config_override) {
+    const config_base64 = Buffer.from(JSON.stringify(params.agent_config_override)).toString("base64");
+    websocket_url += `&conversation_config_override=${config_base64}`;
+  }
 
-export async function getAgentVoices(): Promise<
-  { voice_id: string; name: string; preview_url: string }[]
-> {
-  const res = await fetch(`${ELEVENLABS_BASE_URL}/voices`, {
-    headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY! },
-  });
-  const data = await res.json();
-  return data.voices ?? [];
+  // We don't strictly need to call an API to "start" a session for Twilio Stream,
+  // as the connection to the WebSocket starts it. 
+  // But we return the URL to be used in TwiML.
+  return { 
+    session_id: params.call_sid, // Use call_sid as session_id for tracking
+    websocket_url 
+  };
 }
 
 export async function updateAgentConfig(config: {
@@ -30,6 +35,26 @@ export async function updateAgentConfig(config: {
   repetition_level: number;
   metaphor_mode: boolean;
 }): Promise<void> {
-  // TODO (Agent 1): patch ElevenLabs agent with updated config
-  throw new Error("Not implemented");
+  const res = await fetch(`${ELEVENLABS_BASE_URL}/convai/agents/${ELEVENLABS_AGENT_ID}`, {
+    method: "PATCH",
+    headers: {
+      "xi-api-key": process.env.ELEVENLABS_API_KEY!,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      conversation_config: {
+        tts: {
+          voice_id: config.voice_id,
+          speed: config.tts_speed,
+        },
+        // metaphor_mode and repetition_level might need to be handled in the prompt
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    console.error("Failed to update ElevenLabs agent config:", error);
+    throw new Error(`ElevenLabs API error: ${error}`);
+  }
 }
