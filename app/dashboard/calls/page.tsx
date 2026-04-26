@@ -64,14 +64,7 @@ export default async function CallsPage({
         <table className="w-full text-sm">
           <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
             <tr>
-              {[
-                "Date & Time",
-                "Duration",
-                "Sentiment",
-                "Task Label",
-                "Conversation Summary",
-                "Confidence",
-              ].map((h) => (
+              {["Date & Time", "Duration", "Sentiment", "Conversation Summary"].map((h) => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
                   {h}
                 </th>
@@ -81,7 +74,7 @@ export default async function CallsPage({
           <tbody className="divide-y divide-[#e8e4de]">
             {normalizedCalls.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-[#888] text-sm">
+                <td colSpan={4} className="px-5 py-10 text-center text-[#888] text-sm">
                   No calls found.
                 </td>
               </tr>
@@ -107,14 +100,8 @@ export default async function CallsPage({
                   <td className="px-5 py-3.5 text-[#666]">
                     {call.intent_text ?? "—"}
                   </td>
-                  <td className="px-5 py-3.5 text-[#666]">
-                    {call.task_label ?? "Task pending"}
-                  </td>
                   <td className="max-w-md px-5 py-3.5 text-[#666]">
                     {call.summary ?? "Summary pending"}
-                  </td>
-                  <td className="px-5 py-3.5 text-[#666]">
-                    {call.task_confidence ?? "Pending"}
                   </td>
                 </tr>
               ))
