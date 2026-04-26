@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Coco — AI Phone Companion for Elderly Users
 
-## Getting Started
+> Built at **UWB Hacks 2026** by Selen
 
-First, run the development server:
+Coco is a voice-first AI companion that lets elderly users get help with their digital lives by simply making a phone call — no app, no screen, no learning curve. Caretakers get a real-time dashboard with alerts, call history, and full personalisation controls.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## The Problem
+
+Elderly people struggle with smartphones and scams. They need help navigating apps, identifying phishing calls, and staying connected — but asking family members every time creates burden and erodes their independence. Existing tools require too much technical literacy to use.
+
+## The Solution
+
+Coco is a dedicated phone number elderly users call whenever they need help. An AI voice agent answers, understands their intent, retrieves step-by-step instructions tailored to their device, and guides them through tasks conversationally. Meanwhile, a scam-monitoring layer flags suspicious calls and alerts caretakers instantly.
+
+---
+
+## How It Works
+
+```
+Elderly User → Twilio → ElevenLabs Voice Agent
+                              ↓               ↓
+                   Intent Understanding    Scam / Risk Monitoring
+                              ↓               ↓
+                   Backend Semantic Search  Live Caretaker Alert
+                              ↓
+                   Known Task Found?
+                    Yes ↓        ↓ No
+             Fetch Structured   Fallback LLM
+             Instructions       Help
+             (Supabase)
+                    └────────────┘
+                              ↓
+                   Step-by-Step Voice Guidance
+                              ↓
+                   Call Summary + Memory → Supabase
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Layer | Technology |
+|---|---|
+| Phone & voice routing | Twilio |
+| Voice synthesis | ElevenLabs |
+| Intent & scam detection | Google Gemini |
+| Fallback reasoning | Anthropic Claude |
+| Database & auth | Supabase |
+| Frontend & API | Next.js 16 (App Router) |
+| Deployment | Vercel |
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**For the elderly user**
+- Call a single number (`+1 888 870-8838`) — no app required
+- Patient, conversational step-by-step guidance
+- Device-aware instructions (tuned to their phone model)
+- Real-time scam detection mid-call
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**For the caretaker**
+- Dashboard with full call history and transcripts
+- Instant SMS/dashboard alerts on scam detections
+- Personalise Coco's voice, pacing, and metaphor style
+- Link multiple elderly users to one account
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Local Setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Set environment variables
+cp .env.example .env.local
+# Fill in: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
+#          TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER,
+#          ELEVENLABS_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, ANTHROPIC_API_KEY
+
+# 3. Run dev server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Project Structure
+
+```
+app/
+  page.tsx              # Landing page
+  dashboard/            # Caretaker dashboard (calls, config, alerts)
+  auth/                 # Login / signup flow
+  api/
+    voice/              # Twilio webhooks, ElevenLabs integration
+    dashboard/          # REST API for caretaker data
+    intelligence/       # Scam detection, intent parsing
+components/
+  dashboard/            # Sidebar, charts, call cards
+  ui/                   # Shared inputs, buttons, switches
+```
+
+---
+
+## Team
+
+Built solo by **Selen** at UWB Hacks 2026.
