@@ -57,16 +57,30 @@ export async function POST(req: NextRequest) {
     const isNewSchema = payload.type === "post_call_transcription" && payload.data;
     const data = isNewSchema ? payload.data : payload;
 
+    // Log the structure of data.analysis if it exists to help debug
+    if (data.analysis) {
+      console.log("[post-call] Analysis keys:", Object.keys(data.analysis));
+      console.log("[post-call] Full analysis object:", JSON.stringify(data.analysis));
+    }
+
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
-    const sentiment = data.analysis?.user_sentiment_at_end || data.user_sentiment_at_end || payload.user_sentiment_at_end;
-    const duration = data.metadata?.call_duration_secs || data.call_duration_secs;
+    
+    // Broaden sentiment extraction search
+    const sentiment = 
+      data.analysis?.user_sentiment_at_end || 
+      data.user_sentiment_at_end || 
+      payload.analysis?.user_sentiment_at_end ||
+      payload.user_sentiment_at_end ||
+      data.analysis?.sentiment ||
+      data.sentiment;
+
+    const duration = data.metadata?.call_duration_secs || data.call_duration_secs || data.metadata?.duration_secs;
 
     console.log("[post-call] Extracted values:", { 
       hasSummary: !!summary, 
-      sentiment, 
+      sentiment: sentiment || "STILL_UNDEFINED", 
       duration,
-      call_log_id_source: !!(data.conversation_initiation_client_data?.dynamic_variables?.call_log_id || data.metadata?.call_log_id || data.custom_data?.call_log_id)
     });
 
     const supabase = await createServiceClient();
