@@ -127,7 +127,7 @@ export default async function DashboardPage() {
 
       {alerts.length > 0 && <LiveAlertsPanel initialAlerts={alerts} />}
 
-      <div className="grid gap-4 grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <Card className="p-5">
           <p className="text-xs font-medium uppercase tracking-wider text-[#888]">Total Calls</p>
           <p className="mt-3 text-3xl font-bold text-[#1a1208]">{totalCalls}</p>
@@ -160,39 +160,40 @@ export default async function DashboardPage() {
               <p className="text-sm text-[#888]">No calls yet. They&apos;ll show up here.</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
-                <tr>
-                  {["Date", "Duration", "Intent", "Status"].map((h) => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e8e4de]">
-                {recentCalls.map((call) => (
-                  <tr key={call.id} className="hover:bg-[#f5f4f0] transition-colors">
-                    <td className="px-5 py-3.5">
-                      <Link href={`/dashboard/calls/${call.id}`} className="font-medium text-[#1a1208] hover:text-[#e8733b]">
-                        {new Date(call.started_at).toLocaleString("en-US", {
-                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles"
-                        })}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5 text-[#666]">{formatDuration(call.duration_seconds)}</td>
-                    <td className="px-5 py-3.5 text-[#666]">
-                      {call.flow?.app ?? call.intent_text ?? "Unknown"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge variant={call.status === "completed" ? "green" : call.status === "scam_blocked" ? "red" : "gray"}>
-                        {call.status ?? "unknown"}
-                      </Badge>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">Date</th>
+                    <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">Duration</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">Intent</th>
+                    <th className="hidden xs:table-cell px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#e8e4de]">
+                  {recentCalls.map((call) => (
+                    <tr key={call.id} className="hover:bg-[#f5f4f0] transition-colors">
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        <Link href={`/dashboard/calls/${call.id}`} className="font-medium text-[#1a1208] hover:text-[#e8733b]">
+                          {new Date(call.started_at).toLocaleString("en-US", {
+                            month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles"
+                          })}
+                        </Link>
+                      </td>
+                      <td className="hidden sm:table-cell px-5 py-3.5 text-[#666] whitespace-nowrap">{formatDuration(call.duration_seconds)}</td>
+                      <td className="px-5 py-3.5 text-[#666]">
+                        {call.flow?.app ?? call.intent_text ?? "Unknown"}
+                      </td>
+                      <td className="hidden xs:table-cell px-5 py-3.5">
+                        <Badge variant={call.status === "completed" ? "green" : call.status === "scam_blocked" ? "red" : "gray"}>
+                          {call.status ?? "unknown"}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </Card>
       </div>
