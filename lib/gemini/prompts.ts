@@ -26,3 +26,96 @@ VALIDATION PROTOCOL:
 - For each step, ask a yes/no confirmation before proceeding.
 - If the user fails to validate the same step 3 times, use the escalate tool.`;
 }
+
+export function buildIntentJudgePrompt(params: {
+  query: string;
+  candidates: Pick<IngestedFlow, "id" | "name" | "app" | "description">[];
+}) {
+  return `You are an intent-matching judge for an elderly tech support voice agent.
+
+User request:
+"${params.query}"
+
+Candidate intents:
+${params.candidates
+  .map(
+    (candidate, index) =>
+      `${index + 1}. id=${candidate.id}
+name=${candidate.name}
+app=${candidate.app}
+description=${candidate.description}`
+  )
+  .join("\n\n")}
+
+Decide whether one candidate clearly matches the user's goal.
+Return JSON only with this exact shape:
+{
+  "matched": boolean,
+  "intent_id": string | null,
+  "confidence": number,
+  "needs_clarification": boolean,
+  "clarification_question": string | null
+}
+
+Rules:
+- confidence must be between 0 and 1
+- if the request is ambiguous, set matched=false and needs_clarification=true
+- ask one short clarification question when needed
+- if no candidate fits, set matched=false and needs_clarification=false`;
+}
+
+export function buildScamDetectionPrompt(transcriptChunk: string) {
+  return `You analyze spoken conversation for scam indicators targeting elderly users.
+
+Transcript chunk:
+"${transcriptChunk}"
+
+Look for:
+- urgency pressure
+- gift card requests
+- wire transfer requests
+- bank/government impersonation
+- remote access pressure
+- threats, fines, arrest, account lock warnings
+
+Return JSON only with:
+{
+  "scam_detected": boolean,
+  "confidence": number,
+  "keywords": string[],
+  "severity": "high" | "critical"
+}
+
+Rules:
+- confidence must be between 0 and 1
+- use severity "critical" for highly coercive or financial-loss-imminent scams
+- if no scam is present, return scam_detected=false and keywords=[]`;
+}
+
+export function buildSummaryPrompt(transcript: string) {
+  return `Summarize this support call in 2 concise sentences for a caretaker dashboard.
+Focus on what the user needed, what happened, and any outcome or unresolved issue.
+
+Transcript:
+${transcript}`;
+}
+
+export function buildMoodPrompt(transcript: string) {
+  return `Analyze the emotional state of the elderly caller in this support call.
+
+Return JSON only:
+{
+  "sentiment_score": number,
+  "frustration_level": number,
+  "confusion_level": number
+}
+
+Rules:
+- sentiment_score range: -1 to 1
+- frustration_level range: 0 to 1
+- confusion_level range: 0 to 1
+- base the result on the caller's tone and wording only
+
+Transcript:
+${transcript}`;
+}

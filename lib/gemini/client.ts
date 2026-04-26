@@ -8,7 +8,7 @@ const embeddingModel = genAI.getGenerativeModel({
 });
 
 export const brainModel = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-2.5-flash",
 });
 
 /**
@@ -16,8 +16,30 @@ export const brainModel = genAI.getGenerativeModel({
  * Used for storing and searching past conversation history.
  */
 export async function embedText(text: string): Promise<number[]> {
-  const result = await embeddingModel.embedContent(text);
+  const normalized = text.trim();
+
+  if (!normalized) {
+    throw new Error("Cannot embed empty text");
+  }
+
+  const result = await embeddingModel.embedContent(normalized);
   return result.embedding.values;
+}
+
+/**
+ * Runs a text generation request against Gemini Flash and returns plain text.
+ * Used for LLM-judge style decisions and post-call analysis.
+ */
+export async function generateText(prompt: string): Promise<string> {
+  const normalized = prompt.trim();
+
+  if (!normalized) {
+    throw new Error("Cannot generate from empty prompt");
+  }
+
+  const result = await brainModel.generateContent(normalized);
+  const response = await result.response;
+  return response.text().trim();
 }
 
 /**
@@ -26,6 +48,12 @@ export async function embedText(text: string): Promise<number[]> {
  */
 export function toVectorLiteral(values: number[]): string {
   return `[${values.join(",")}]`;
+}
+
+export function extractJsonBlock<T>(text: string): T {
+  const fencedMatch = text.match(/```json\s*([\s\S]*?)```/i);
+  const raw = fencedMatch?.[1] ?? text;
+  return JSON.parse(raw) as T;
 }
 
 export { genAI };

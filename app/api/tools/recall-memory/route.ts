@@ -1,43 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
+import { buildMemoryText } from "@/lib/gemini/intelligence-utils.mjs";
+
+const requestSchema = z.object({
+  query: z.string().trim().min(1),
+  elderly_user_id: z.string().uuid(),
+});
+
+type MemoryMatch = {
+  text: string;
+  timestamp: string;
+  similarity: number;
+};
 
 /**
  * POST /api/tools/recall-memory
- * Tool for ElevenLabs Agent to search past conversation history.
- * Registered as a "Client Tool" in ElevenLabs dashboard.
+ * Server Tool for ElevenLabs Agent to search past conversation history.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { query, phone } = await req.json();
-
-    if (!query || !phone) {
-      return NextResponse.json({ error: "Missing query or phone" }, { status: 400 });
-    }
+    const { query, elderly_user_id } = requestSchema.parse(await req.json());
 
     const supabase = await createServiceClient();
-    
-    // 1. Lookup the elderly user by phone
-    const { data: elderlyUser, error: userError } = await supabase
-      .from("elderly_users")
-      .select("id")
-      .eq("phone", phone)
-      .single();
 
-    if (userError || !elderlyUser) {
-      return NextResponse.json({ 
-        success: false, 
-        memory: "User not found. Cannot search memory." 
-      });
-    }
-
-    // 2. Embed the search query
     const embedding = await embedText(query);
 
-    // 3. Perform similarity search filtered by the specific elderly user
     const { data: matches, error } = await supabase.rpc("match_memory", {
       query_embedding: toVectorLiteral(embedding),
-      elderly_id: elderlyUser.id,
+      elderly_id: elderly_user_id,
       match_threshold: 0.7,
       match_count: 5,
     });
@@ -47,26 +39,29 @@ export async function POST(req: NextRequest) {
       throw error;
     }
 
-    // 4. Format matches into a context string for the AI
     if (!matches || matches.length === 0) {
-      return NextResponse.json({ 
-        success: true, 
-        memory: "I searched the past conversations but couldn't find any specific information about that." 
+      return NextResponse.json({
+        success: true,
+        memory: "I searched the past conversations but couldn't find any specific information about that.",
       });
     }
 
-    const context = matches
-      .map((m: any) => `- On ${new Date(m.timestamp).toLocaleDateString()}, the user said: "${m.text}"`)
-      .join("\n");
+    const snippets = (matches as MemoryMatch[]).map((match) => ({
+      text: match.text,
+      timestamp: match.timestamp,
+      similarity: match.similarity,
+    }));
 
-    console.log("[recall-memory] Found memory for user:", elderlyUser.id);
+    const memory = buildMemoryText(snippets);
 
-    return NextResponse.json({ 
-      success: true, 
-      memory: context 
-    });
+    console.log("[recall-memory] Found memory for user:", elderly_user_id);
+
+    return NextResponse.json({ success: true, memory, snippets });
   } catch (error) {
     console.error("[recall-memory] Error:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

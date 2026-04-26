@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
+import { normalizeTranscriptEntry } from "@/lib/gemini/intelligence-utils.mjs";
 
 /**
  * POST /api/intelligence/post-call
@@ -12,8 +13,7 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("elevenlabs-signature");
-    
-    // The shared secret provided by ElevenLabs
+
     const secret = process.env.ELEVENLABS_WEBHOOK_SECRET || "wsec_625da311609f0fb97cf6aa0c1f48b7da3ec27072acae379b0172f51afdc27737";
 
     if (!signature) {
@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing signature" }, { status: 401 });
     }
 
-    // Verify HMAC SHA256 signature
     const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(rawBody)
@@ -33,29 +32,26 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = JSON.parse(rawBody || "{}");
-    
-    // Check if it's the new post_call_transcription webhook format
+
+    // Handle both new (post_call_transcription) and legacy payload shapes
     const isNewSchema = payload.type === "post_call_transcription" && payload.data;
     const data = isNewSchema ? payload.data : payload;
 
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
-    
-    // ElevenLabs passes the dynamic variables back in the client data
-    const call_log_id = 
+
+    const call_log_id =
       data.conversation_initiation_client_data?.dynamic_variables?.call_log_id ||
       data.metadata?.call_log_id ||
       data.custom_data?.call_log_id;
 
     if (!call_log_id) {
       console.error("[post-call] Missing call_log_id in metadata");
-      // Return 200 to ElevenLabs to acknowledge, even if we can't process
       return NextResponse.json({ error: "Missing metadata" }, { status: 200 });
     }
 
     const supabase = await createServiceClient();
 
-    // 1. Update the call log with the ElevenLabs summary
     if (summary) {
       await supabase
         .from("call_logs")
@@ -63,17 +59,16 @@ export async function POST(req: NextRequest) {
         .eq("id", call_log_id);
     }
 
-    // 2. Process and store the transcript chunks
-    if (Array.isArray(transcript)) {
+    if (Array.isArray(transcript) && transcript.length > 0) {
       const transcriptEntries = await Promise.all(
         transcript.map(async (entry: any) => {
+          const message = normalizeTranscriptEntry(entry);
           const isUser = entry.role === "user" || entry.role === "user_proxy";
           let embedding = null;
 
-          // Only embed user messages for semantic memory retrieval
-          if (isUser && entry.message && entry.message.trim().length > 0) {
+          if (isUser && message.trim().length > 0) {
             try {
-              const vector = await embedText(entry.message);
+              const vector = await embedText(message);
               embedding = toVectorLiteral(vector);
             } catch (err) {
               console.error("[post-call] Embedding failed for chunk:", err);
@@ -83,16 +78,18 @@ export async function POST(req: NextRequest) {
           return {
             call_log_id,
             speaker: isUser ? "user" : "agent",
-            text: entry.message || "",
+            text: message,
             embedding,
-            timestamp: new Date().toISOString(),
+            timestamp: entry.timestamp ?? new Date().toISOString(),
           };
         })
       );
 
+      const filteredEntries = transcriptEntries.filter((entry) => entry.text.trim().length > 0);
+
       const { error: insertError } = await supabase
         .from("call_transcripts")
-        .insert(transcriptEntries);
+        .insert(filteredEntries);
 
       if (insertError) {
         console.error("[post-call] Failed to insert transcript:", insertError);
