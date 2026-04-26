@@ -97,7 +97,8 @@ export async function POST(req: NextRequest) {
         .update({ 
           summary,
           intent_text: sentiment,
-          duration_seconds: duration
+          duration_seconds: duration,
+          status: "completed"
         })
         .eq("id", call_log_id);
     }
