@@ -1,9 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
-const embeddingModel = genAI.getGenerativeModel({
-  model: "text-embedding-004",
-});
+
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 export const brainModel = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
@@ -20,9 +26,12 @@ export async function embedText(text: string): Promise<number[]> {
     throw new Error("Cannot embed empty text");
   }
 
-  const result = await embeddingModel.embedContent(normalized);
+  const result = await getOpenAI().embeddings.create({
+    model: "text-embedding-3-small",
+    input: normalized,
+  });
 
-  return result.embedding.values;
+  return result.data[0].embedding;
 }
 
 /**
