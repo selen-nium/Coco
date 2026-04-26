@@ -45,7 +45,7 @@ export function DashboardSidebar({ caretaker, primaryUser }: SidebarProps) {
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/8">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Coco" className="h-8 w-auto brightness-0 invert" />
+            <img src="/logo.png" alt="Coco" className="h-8 w-auto" />
           </div>
           <button 
             className="lg:hidden text-[#8a7a6a] hover:text-white transition-colors" 

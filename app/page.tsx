@@ -455,7 +455,7 @@ export default function LandingPage() {
           Meet <span className="text-[#e07438]">Coco.</span>
         </h1>
         <p className="lp-anim-sub text-[#6b5e4a] max-w-[520px] leading-[1.7] mx-auto font-normal" style={{ fontSize: "clamp(15px,1.6vw,20px)" }}>
-          A <strong className="text-[#1c1309] font-semibold">voice AI</strong> your loved ones can call any time for tech support.
+          A <strong className="text-[#1c1309] font-semibold">voice AI</strong> your loved ones can call any time for tech support. 
         </p>
         <div className="lp-anim-actions flex flex-wrap items-center gap-3 justify-center mt-11">
           <Link href="/auth/signup" className="lp-btn-primary bg-[#1c1309] text-[#fdf9f4] py-[14px] px-8 rounded-xl text-[15px] font-bold no-underline inline-flex items-center gap-2">
