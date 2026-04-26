@@ -26,7 +26,11 @@ export async function POST(req: NextRequest) {
       .update(rawBody)
       .digest("hex");
 
-    if (crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature)) === false) {
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    // timingSafeEqual throws an error if buffer lengths don't match
+    if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       console.error("[post-call] Invalid HMAC signature. Unauthorized request.");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
@@ -40,17 +44,35 @@ export async function POST(req: NextRequest) {
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
 
-    const call_log_id =
+    const supabase = await createServiceClient();
+
+    let call_log_id =
       data.conversation_initiation_client_data?.dynamic_variables?.call_log_id ||
       data.metadata?.call_log_id ||
       data.custom_data?.call_log_id;
 
+    // Fallback: If the dynamic variables didn't persist, look it up via the conversation_id
+    // since we saved it in twilio_call_sid during the pre-call webhook!
     if (!call_log_id) {
-      console.error("[post-call] Missing call_log_id in metadata");
+      const convId = data.conversation_id || payload.conversation_id;
+      if (convId) {
+        const { data: cLog } = await supabase
+          .from("call_logs")
+          .select("id")
+          .eq("twilio_call_sid", convId)
+          .single();
+
+        if (cLog) {
+          call_log_id = cLog.id;
+        }
+      }
+    }
+
+    if (!call_log_id) {
+      console.error("[post-call] Missing call_log_id in metadata and fallback lookup failed");
       return NextResponse.json({ error: "Missing metadata" }, { status: 200 });
     }
 
-    const supabase = await createServiceClient();
 
     if (summary) {
       await supabase

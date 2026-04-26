@@ -8,7 +8,7 @@ Wire up te end-to-end phone call using the ElevenLabs Agents API. Twilio handles
 app/api/voice/inbound/route.ts            ← Entry point (Twilio)
 app/api/voice/status/route.ts             ← Cleanup/Log duration (Twilio)
 app/api/voice/sms/route.ts                ← Caretaker linking logic
-app/api/tools/escalate/route.ts           ← Server Tool: AI flags frustration
+app/api/tools/escalate/1route.ts           ← Server Tool: AI flags frustration
 app/api/tools/log-scam/route.ts           ← Server Tool: AI manually logs a threat
 app/api/tools/get-user-context/route.ts   ← Server Tool: fetch elderly_users + agent_configs fields at call start
 lib/twilio/client.ts
