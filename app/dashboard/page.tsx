@@ -145,14 +145,6 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {alerts.length > 0 && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-center gap-3">
-          <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-          <p className="text-sm font-medium text-red-700">
-            {alerts.length} active scam alert{alerts.length !== 1 ? "s" : ""} require your attention
-          </p>
-        </div>
-      )}
 
       <div className="grid gap-4 grid-cols-3">
         <Card className="p-5">
@@ -184,6 +176,61 @@ export default async function DashboardPage() {
         </Card>
       )}
 
+      {/* Scam alerts card */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-base font-semibold text-[#1a1208]">Scam alerts</p>
+          {alerts.length > 0 && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-red-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+              {alerts.length} active
+            </span>
+          )}
+        </div>
+        <Card className="overflow-hidden">
+          {alerts.length === 0 ? (
+            <div className="flex items-center gap-3 px-5 py-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8f3ee]">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 7l3.5 3.5L12 3" stroke="#2d6a4f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <p className="text-sm text-[#888]">No active scam alerts — all clear.</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
+                <tr>
+                  {["User", "Severity", "Keywords", "Detected"].map((h) => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e8e4de]">
+                {alerts.map((alert) => (
+                  <tr key={alert.id} className="hover:bg-[#fff8f4] transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-[#1a1208]">{alert.elderly_user.name}</td>
+                    <td className="px-5 py-3.5">
+                      <Badge variant={alert.severity === "critical" ? "red" : "amber"}>
+                        {alert.severity}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3.5 text-[#666]">
+                      {(alert.detected_keywords ?? []).slice(0, 3).join(", ") || "—"}
+                    </td>
+                    <td className="px-5 py-3.5 text-[#888]">
+                      {new Date(alert.created_at).toLocaleString("en-US", {
+                        month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles"
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      </div>
+
       <div>
         <div className="flex items-center justify-between mb-4">
           <p className="text-base font-semibold text-[#1a1208]">Recent calls</p>
@@ -213,7 +260,7 @@ export default async function DashboardPage() {
                     <td className="px-5 py-3.5">
                       <Link href={`/dashboard/calls/${call.id}`} className="font-medium text-[#1a1208] hover:text-[#e8733b]">
                         {new Date(call.started_at).toLocaleString("en-US", {
-                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles"
                         })}
                       </Link>
                     </td>

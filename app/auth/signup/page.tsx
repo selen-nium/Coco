@@ -3,7 +3,9 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PhoneModelSelect } from "@/components/ui/PhoneModelSelect";
+import { Switch } from "@/components/ui/Switch";
 
 type Step = 1 | 2 | "2verify" | 3;
 
@@ -219,7 +221,7 @@ export default function SignupPage() {
                 <Input label="Last name" placeholder="Mitchell" value={profile.lastName} onChange={e => setProfile(p => ({ ...p, lastName: e.target.value }))} />
               </div>
               <Input label="Email address" type="email" placeholder="sarah@gmail.com" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} />
-              <Input label="Your mobile number" type="tel" placeholder="+1 (555) 000-0000" hint="Coco sends you urgent scam alerts here via SMS" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
+              <PhoneInput label="Your mobile number" hint="Coco sends you urgent scam alerts here via SMS" value={profile.phone} onChange={v => setProfile(p => ({ ...p, phone: v }))} />
               <Input label="Password" type="password" placeholder="Create a strong password" value={profile.password} onChange={e => setProfile(p => ({ ...p, password: e.target.value }))} />
               <div className="flex justify-end pt-2">
                 <Button onClick={handleStep1} disabled={loading || !profile.firstName || !profile.email || !profile.password} size="lg">
@@ -246,7 +248,7 @@ export default function SignupPage() {
               <Input label="Their first name" placeholder="Harold" value={elderly.name} onChange={e => setElderly(p => ({ ...p, name: e.target.value }))} />
               <Input label="Nickname (optional)" placeholder="Dad, Mom, Grandpa…" hint="Shows in your sidebar for quick reference" value={elderly.nickname} onChange={e => setElderly(p => ({ ...p, nickname: e.target.value }))} />
               <Input label="Their age (optional)" type="number" placeholder="78" hint="Helps Coco calibrate pacing and patience level" value={elderly.age} onChange={e => setElderly(p => ({ ...p, age: e.target.value }))} />
-              <Input label="Their mobile number" type="tel" placeholder="+1 (555) 843-2201" hint="This is the number they'll call Coco from" value={elderly.phone} onChange={e => setElderly(p => ({ ...p, phone: e.target.value }))} />
+              <PhoneInput label="Their mobile number" hint="This is the number they'll call Coco from" value={elderly.phone} onChange={v => setElderly(p => ({ ...p, phone: v }))} />
               <PhoneModelSelect
                 value={elderly.phoneModel}
                 onChange={v => setElderly(p => ({ ...p, phoneModel: v }))}
@@ -337,13 +339,10 @@ export default function SignupPage() {
                   <p className="text-sm font-semibold text-[#1a1208]">Metaphor-Teaching Mode</p>
                   <p className="text-xs text-[#888]">"Think of the home screen like your desk…"</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAgent(a => ({ ...a, metaphor: !a.metaphor }))}
-                  className={`relative h-6 w-11 rounded-full overflow-hidden transition-colors ${agent.metaphor ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
-                >
-                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${agent.metaphor ? "translate-x-5" : "translate-x-0.5"}`} />
-                </button>
+                <Switch
+                  checked={agent.metaphor}
+                  onCheckedChange={(checked) => setAgent(a => ({ ...a, metaphor: checked }))}
+                />
               </div>
 
               <div className="flex justify-between pt-2">

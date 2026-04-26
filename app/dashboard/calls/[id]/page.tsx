@@ -64,7 +64,7 @@ export default async function CallDetailPage({
             {normalizedCall.elderly_user?.name}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            {new Date(normalizedCall.started_at).toLocaleString()}
+            {new Date(normalizedCall.started_at).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
           </p>
         </div>
         <Link href="/dashboard/calls" className="rounded-xl bg-white px-4 py-2 text-sm ring-1 ring-slate-200">
@@ -107,7 +107,7 @@ export default async function CallDetailPage({
                 <p className="font-semibold capitalize">{line.speaker}</p>
                 <p className="mt-1 whitespace-pre-wrap">{line.text}</p>
                 <p className="mt-2 text-xs opacity-70">
-                  {new Date(line.timestamp).toLocaleTimeString()}
+                  {new Date(line.timestamp).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "2-digit" })}
                 </p>
               </div>
             ))}
@@ -125,7 +125,7 @@ export default async function CallDetailPage({
                   <div className="flex items-center justify-between gap-3">
                     <Badge variant={item.type === "scam" ? "red" : "gray"}>{item.type}</Badge>
                     <span className="text-xs text-slate-500">
-                      {new Date(item.triggered_at).toLocaleTimeString()}
+                      {new Date(item.triggered_at).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "2-digit" })}
                     </span>
                   </div>
                   <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">

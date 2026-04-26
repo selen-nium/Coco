@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Switch } from "@/components/ui/Switch";
 
 type ElderlyUser = {
   id: string;
@@ -201,13 +202,10 @@ export function ConfigManager({
                 <p className="text-sm font-semibold text-[#1a1208]">Metaphor-Teaching Mode</p>
                 <p className="text-xs text-[#888] mt-0.5">"Think of this like your TV remote…"</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setConfig({ ...config, metaphor_mode: !config.metaphor_mode })}
-                className={`relative h-6 w-11 rounded-full overflow-hidden transition-colors ${config.metaphor_mode ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
-              >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.metaphor_mode ? "translate-x-5" : "translate-x-0.5"}`} />
-              </button>
+              <Switch
+                checked={config.metaphor_mode}
+                onCheckedChange={(checked) => setConfig({ ...config, metaphor_mode: checked })}
+              />
             </div>
 
             <div className="flex items-center justify-between rounded-xl border border-[#e8e4de] px-4 py-4">
@@ -215,13 +213,10 @@ export function ConfigManager({
                 <p className="text-sm font-semibold text-[#1a1208]">Allow sensitive flows</p>
                 <p className="text-xs text-[#888] mt-0.5">Banking, medical, and legal guidance.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setConfig({ ...config, allow_sensitive_flows: !config.allow_sensitive_flows })}
-                className={`relative h-6 w-11 rounded-full overflow-hidden transition-colors ${config.allow_sensitive_flows ? "bg-[#e8733b]" : "bg-[#d0cdc8]"}`}
-              >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${config.allow_sensitive_flows ? "translate-x-5" : "translate-x-0.5"}`} />
-              </button>
+              <Switch
+                checked={config.allow_sensitive_flows}
+                onCheckedChange={(checked) => setConfig({ ...config, allow_sensitive_flows: checked })}
+              />
             </div>
           </div>
 
