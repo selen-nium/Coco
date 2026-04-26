@@ -351,18 +351,6 @@ export default function LandingPage() {
             <div className="text-[13px] font-semibold text-[#1c1309]">SMS sent to Sarah</div>
           </div>
         </div>
-
-        {/* ── Scroll hint — fixed: spans full width so items-center truly centers ── */}
-        <div
-          className="absolute bottom-9 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
-          style={{ animation: "lp-fade-in-up 1s 2.5s both" }}
-        >
-          <span className="text-[11px] text-[#9e8e7a] tracking-[.1em] uppercase">Scroll to explore</span>
-          <div
-            className="w-5 h-5 border-r-[1.5px] border-b-[1.5px] border-[#9e8e7a]"
-            style={{ animation: "lp-bounce-down 1.5s ease infinite" }}
-          />
-        </div>
       </section>
 
       {/* ── Problem ── */}
