@@ -122,3 +122,14 @@ html, body { overflow-x: hidden; }
 /* ── Carousel ── */
 .lp-features-track { scrollbar-width: none; }
 .lp-features-track::-webkit-scrollbar { display: none; }
+
+/* ── Tech logo scroll ── */
+@keyframes lp-tech-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.lp-tech-scroll {
+  animation: lp-tech-scroll 28s linear infinite;
+  width: max-content;
+}
+.lp-tech-scroll:hover { animation-play-state: paused; }

@@ -4,12 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 // ── Inline SVG icons ──────────────────────────────────────────────────────────
-const IconMic = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" fill="white" opacity=".5" stroke="white" strokeWidth="1.4"/>
-    <path d="M2.5 9a5.5 5.5 0 0 0 11 0M8 14.5V12" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
-  </svg>
-);
 const IconPhone = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
     <path d="M5.5 3h4.2l2.1 4.8L9 9.55c.98 2.1 2.1 3.3 4.2 4.2l2.25-2.55L20.5 13.9V18a1.5 1.5 0 0 1-1.5 1.5C9.3 19.5 4 14.2 4 5a1.5 1.5 0 0 1 1.5-2Z" stroke="#e07438" strokeWidth="1.6" fill="none"/>
@@ -21,10 +15,15 @@ const IconShield = () => (
     <path d="M8 12.5l3 3 6-6" stroke="#3d8c6a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-const IconDashboard = () => (
+const IconWave = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-    <rect x="3" y="3" width="18" height="18" rx="4" stroke="#4A7FC1" strokeWidth="1.5" fill="none"/>
-    <path d="M7 12h10M7 8h6M7 16h8" stroke="#4A7FC1" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M9 18V6M6 15V9M12 20V4M15 18V6M18 15V9" stroke="#4A7FC1" strokeWidth="1.6" strokeLinecap="round"/>
+  </svg>
+);
+const IconAlertTriangle = () => (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2.5L2.5 21h19L12 2.5Z" stroke="#c0392b" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
+    <path d="M12 9v5M12 16.5v.5" stroke="#c0392b" strokeWidth="1.6" strokeLinecap="round"/>
   </svg>
 );
 const IconArrowRight = ({ size = 14 }: { size?: number }) => (
@@ -42,11 +41,6 @@ const IconChevRight = () => (
     <path d="M7 4l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-const IconCallFill = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M5.5 3h4.2l2.1 4.8L9 9.55c.98 2.1 2.1 3.3 4.2 4.2l2.25-2.55L20.5 13.9V18a1.5 1.5 0 0 1-1.5 1.5C9.3 19.5 4 14.2 4 5a1.5 1.5 0 0 1 1.5-2Z" fill="white"/>
-  </svg>
-);
 
 // ── Wave animation bars ───────────────────────────────────────────────────────
 const WaveBars = ({ delays }: { delays: number[] }) => (
@@ -61,88 +55,263 @@ const WaveBars = ({ delays }: { delays: number[] }) => (
   </div>
 );
 
-// ── Phone frame for How It Works scenes ──────────────────────────────────────
-// const HowPhone = ({ children }: { children: React.ReactNode }) => (
-//   <div
-//     className="relative flex flex-col items-center justify-start overflow-hidden gap-3 rounded-[28px] border border-[#ecdecb]"
-//     style={{
-//       width: 180, height: 320,
-//       background: "linear-gradient(160deg,#fffcf7,#fdf3e3)",
-//       padding: "40px 18px 18px",
-//       boxShadow: "0 20px 60px rgba(28,19,9,.1)",
-//     }}
-//   >
-//     <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[50px] h-[5px] bg-[#ecdecb] rounded-full" />
-//     {children}
-//   </div>
-// );
+// ── Inline toggle switch ──────────────────────────────────────────────────────
+const ToggleSwitch = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!checked)}
+    className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${checked ? "bg-[#e07438]" : "bg-[#ddd]"}`}
+  >
+    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
+  </button>
+);
 
-// const SceneLabel = ({ label, caption }: { label: string; caption: string }) => (
-//   <>
-//     <div className="text-[13px] font-semibold text-[#9e8e7a] tracking-[.06em] uppercase">{label}</div>
-//     <div className="text-base text-[#6b5e4a] leading-[1.6] max-w-[360px] text-center">{caption}</div>
-//   </>
-// );
+// ── Demo: Voice personalisation UI ───────────────────────────────────────────
+function VoiceSetupDemo() {
+  const [voice, setVoice] = useState("emily");
+  const [speed, setSpeed] = useState(0.9);
+  const [repetition, setRepetition] = useState(3);
+  const [metaphorMode, setMetaphorMode] = useState(true);
+  const [sensitiveFlows, setSensitiveFlows] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  function handleSave() {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#e8e4de] p-6 shadow-sm w-full">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold text-[#1a1208]">Agent configuration</h3>
+          <p className="text-xs text-[#888] mt-0.5">Tune voice, pacing, and teaching style.</p>
+        </div>
+        <button
+          onClick={handleSave}
+          className={`text-xs font-semibold px-4 py-2 rounded-lg transition-colors ${saved ? "bg-[#e8f3ee] text-[#2d6a4f]" : "bg-[#1a1208] text-white hover:bg-[#3d2d1a]"}`}
+        >
+          {saved ? "Saved ✓" : "Save"}
+        </button>
+      </div>
+
+      <div className="grid gap-4 grid-cols-2">
+        <div className="flex flex-col gap-1.5 col-span-2">
+          <label className="text-xs font-medium text-[#1a1208]">Voice</label>
+          <select
+            value={voice}
+            onChange={e => setVoice(e.target.value)}
+            className="w-full rounded-xl border border-[#e8e4de] bg-white px-3 py-2.5 text-sm text-[#1a1208] outline-none focus:border-[#e07438]"
+          >
+            <option value="emily">Emily (Female · Warm)</option>
+            <option value="james">James (Male · Calm)</option>
+            <option value="sofia">Sofia (Female · Bright)</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between">
+            <label className="text-xs font-medium text-[#1a1208]">Speaking speed</label>
+            <span className="text-xs font-semibold text-[#e07438]">{speed.toFixed(1)}x</span>
+          </div>
+          <input
+            type="range" min="0.5" max="1.5" step="0.1"
+            value={speed}
+            onChange={e => setSpeed(Number(e.target.value))}
+            className="w-full accent-[#e07438]"
+          />
+          <div className="flex justify-between">
+            <span className="text-[10px] text-[#aaa]">Slower</span>
+            <span className="text-[10px] text-[#aaa]">Faster</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between">
+            <label className="text-xs font-medium text-[#1a1208]">Repetition level</label>
+            <span className="text-xs font-semibold text-[#e07438]">{repetition}</span>
+          </div>
+          <input
+            type="range" min="1" max="5" step="1"
+            value={repetition}
+            onChange={e => setRepetition(Number(e.target.value))}
+            className="w-full accent-[#e07438]"
+          />
+          <div className="flex justify-between">
+            <span className="text-[10px] text-[#aaa]">Less</span>
+            <span className="text-[10px] text-[#aaa]">More</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between col-span-2 rounded-xl border border-[#e8e4de] px-4 py-3">
+          <div>
+            <p className="text-xs font-semibold text-[#1a1208]">Metaphor-Teaching Mode</p>
+            <p className="text-[10px] text-[#888] mt-0.5">"Think of this like your TV remote…"</p>
+          </div>
+          <ToggleSwitch checked={metaphorMode} onChange={setMetaphorMode} />
+        </div>
+
+        <div className="flex items-center justify-between col-span-2 rounded-xl border border-[#e8e4de] px-4 py-3">
+          <div>
+            <p className="text-xs font-semibold text-[#1a1208]">Allow sensitive flows</p>
+            <p className="text-[10px] text-[#888] mt-0.5">Banking, medical, and legal guidance.</p>
+          </div>
+          <ToggleSwitch checked={sensitiveFlows} onChange={setSensitiveFlows} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Demo: Smart dashboard UI ──────────────────────────────────────────────────
+function DashboardDemo() {
+  const [alertDismissed, setAlertDismissed] = useState(false);
+
+  const mockCalls = [
+    { date: "Apr 25, 3:42 PM", duration: "4m 12s", intent: "Password Reset", status: "completed" },
+    { date: "Apr 24, 11:15 AM", duration: "2m 45s", intent: "App Store Help", status: "completed" },
+    { date: "Apr 23, 9:30 AM", duration: "1m 20s", intent: "Suspicious Call", status: "scam_blocked" },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#e8e4de] overflow-hidden shadow-sm w-full">
+      {/* Stats */}
+      <div className="grid grid-cols-3 divide-x divide-[#e8e4de] border-b border-[#e8e4de]">
+        {[
+          { label: "Total Calls", value: "12", sub: "Last 30 days", danger: false },
+          { label: "Scam Alerts", value: alertDismissed ? "0" : "1", sub: "Active", danger: !alertDismissed },
+          { label: "Protected Users", value: "1", sub: "Currently linked", danger: false },
+        ].map(s => (
+          <div key={s.label} className="px-4 py-4">
+            <p className="text-[10px] uppercase tracking-wider text-[#888] font-medium">{s.label}</p>
+            <p className={`text-2xl font-bold mt-1.5 ${s.danger ? "text-red-600" : "text-[#1a1208]"}`}>{s.value}</p>
+            <p className="text-[10px] text-[#aaa] mt-0.5">{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Scam alert banner */}
+      {!alertDismissed && (
+        <div className="flex items-center gap-3 px-5 py-3 bg-red-50 border-b border-[#e8e4de]">
+          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-red-700">Scam alert — Margaret</p>
+            <p className="text-[10px] text-red-500 truncate">Keywords: "gift cards", "urgent transfer" · Apr 23, 9:30 AM</p>
+          </div>
+          <button
+            onClick={() => setAlertDismissed(true)}
+            className="text-[10px] border border-red-200 text-red-600 px-3 py-1.5 rounded-lg font-medium hover:bg-red-100 transition-colors flex-shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Recent calls */}
+      <div className="px-5 py-3 border-b border-[#e8e4de] flex items-center justify-between">
+        <p className="text-xs font-semibold text-[#1a1208]">Recent calls</p>
+        <span className="text-[10px] text-[#e07438] font-medium">View all →</span>
+      </div>
+      <table className="w-full">
+        <thead className="bg-[#f5f4f0] border-b border-[#e8e4de]">
+          <tr>
+            {["Date", "Duration", "Intent", "Status"].map(h => (
+              <th key={h} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-wider text-[#888]">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#e8e4de]">
+          {mockCalls.map((call, i) => (
+            <tr key={i} className="hover:bg-[#fdf9f4] transition-colors">
+              <td className="px-4 py-3 text-xs font-medium text-[#1a1208]">{call.date}</td>
+              <td className="px-4 py-3 text-xs text-[#666]">{call.duration}</td>
+              <td className="px-4 py-3 text-xs text-[#666]">{call.intent}</td>
+              <td className="px-4 py-3">
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  call.status === "completed" ? "bg-[#e8f3ee] text-[#2d6a4f]" :
+                  call.status === "scam_blocked" ? "bg-red-50 text-red-600" :
+                  "bg-[#f5f4f0] text-[#666]"
+                }`}>
+                  {call.status === "completed" ? "Completed" : call.status === "scam_blocked" ? "Blocked" : call.status}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const FEATURE_CARDS = [
   {
     num: "01 / 04", iconBg: "rgba(224,116,56,.12)", icon: <IconPhone />,
-    title: "Max simplicity",
-    text: "Just 1 call away. No app downloads, no web searches, no confusion — just help when it’s needed.",
+    title: "Zero-Friction",
+    text: "No apps to navigate, and no web searching required. Help is one phone call away.",
     tagBg: "#fff3cc", tagColor: "#a06a00", tag: "No smartphone skills required",
   },
   {
-    num: "02 / 04", iconBg: "rgba(61,140,106,.1)", icon: <IconShield />,
-    title: "Adaptive pace & tone",
-    text: "Slows down when users feel confused, speaks louder if needed, and stays warm, human, and patient throughout.",
-    tagBg: "rgba(61,140,106,.09)", tagColor: "#2d6e52", tag: "Powered by Gemini",
+    num: "02 / 04", iconBg: "rgba(74,127,193,.1)", icon: <IconWave />,
+    title: "Adaptive Tone",
+    text: "Coco listens and adjusts in real-time. If the senior sounds confused, Coco slows down; if they struggle to hear, it speaks louder—all while maintaining a warm, human-like tone.",
+    tagBg: "rgba(74,127,193,.1)", tagColor: "#2f5e9e", tag: "Powered by Gemini",
   },
   {
-    num: "03 / 04", iconBg: "rgba(74,127,193,.1)", icon: <IconDashboard />,
-    title: "Active scam detection",
-    text: "Understands context in real-time to detect high-risk situations like suspicious transfers and alerts caregivers instantly.",
-    tagBg: "rgba(74,127,193,.1)", tagColor: "#2f5e9e", tag: "Full visibility & control",
+    num: "03 / 04", iconBg: "rgba(192,57,43,.08)", icon: <IconAlertTriangle />,
+    title: "Active Scam Detection",
+    text: "While assisting, Coco monitors for high-risk language. If a conversation shifts toward a suspicious bank transfer or a known scam tactic, Coco intervenes and instantly notifies you.",
+    tagBg: "rgba(192,57,43,.08)", tagColor: "#c0392b", tag: "Real-time caretaker alerts",
   },
   {
-    num: "04 / 04", iconBg: "rgba(74,127,193,.1)", icon: <IconDashboard />,
-    title: "Security guardrails",
-    text: "Proactively reminds users never to share sensitive information like passwords, PINs, or banking details.",
-    tagBg: "rgba(74,127,193,.1)", tagColor: "#2f5e9e", tag: "Full visibility & control",
+    num: "04 / 04", iconBg: "rgba(61,140,106,.1)", icon: <IconShield />,
+    title: "Security Guardrails",
+    text: "Safety is built-in. Coco proactively reminds users never to share sensitive data like passwords or PINs, acting as a constant digital bodyguard during every task.",
+    tagBg: "rgba(61,140,106,.09)", tagColor: "#2d6e52", tag: "Always protected",
   },
 ];
 
-// const STEPS = [
-//   { title: "Harold dials in",   text: "He calls his dedicated Coco number from any phone. No app, no internet, no setup needed." },
-//   { title: "Coco listens",      text: "He describes his problem in plain English. Coco classifies the intent and loads the right guide instantly." },
-//   { title: "Step by step",      text: "Coco talks Harold through every action, confirming each step. Adapts if he gets confused or goes off-track." },
-//   { title: "You stay informed", text: "Sarah sees an AI summary of the call, any alerts triggered, and Harold's mood trend — all in the dashboard." },
-// ];
-
 const PROBLEMS = [
   {
-    icon: "📞",
-    title: "Tech support is too complex",
-    text: "Existing solutions assume smartphone literacy. Hold menus, multi-step apps, and jargon leave seniors stranded.",
+    icon: "😓",
+    title: "Reducing Burden",
+    text: "You want to be patient, but spending an hour explaining a password reset over the phone can be draining. It turns quality family time into a stressful tech support session.",
+  },
+  {
+    icon: "🏢",
+    title: "The Help Gap",
+    text: "Commercial tech support can be jargon-heavy, impatient, and have long wait times. It's not designed for seniors, and it shows.",
   },
   {
     icon: "🎣",
-    title: "Scams are targeting the vulnerable",
-    text: "1 in 5 seniors fall victim to phone scams each year. Families have no way to intervene in real time.",
+    title: "Scams and Security",
+    text: "Digital confusion is the primary gateway for scammers. Without a trusted \"second opinion,\" a simple software update can lead to a devastating financial loss.",
   },
   {
-    icon: "😔",
-    title: "Caretakers are kept in the dark",
-    text: "Families worry constantly but can't monitor every interaction. There's no visibility, no alerts, no peace of mind.",
+    icon: "🏠",
+    title: "Growing Isolation",
+    text: "As banking and healthcare move entirely online, seniors who struggle with tech don't just lose an app—they lose their independence.",
   },
+];
+
+const TECH_STACK = [
+  { name: "ElevenLabs", file: "elevenlabs.png", role: "Voice Synthesis" },
+  { name: "Gemini", file: "gemini.png", role: "AI Understanding" },
+  { name: "Twilio", file: "twilio.png", role: "Call Routing" },
+  { name: "Supabase", file: "supabase.png", role: "Database & Auth" },
+  { name: "Next.js", file: "nextjs.png", role: "Full-Stack Framework" },
+  { name: "Vercel", file: "vercel.png", role: "Deployment" },
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function LandingPage() {
-  const [activeStep, setActiveStep] = useState(0);
   const [activeCard, setActiveCard] = useState(0);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepIdxRef   = useRef(0);
+
+  const N        = FEATURE_CARDS.length;
+  const leftIdx  = (activeCard - 1 + N) % N;
+  const rightIdx = (activeCard + 1) % N;
 
   // Scroll: progress bar + nav blur
   useEffect(() => {
@@ -183,35 +352,6 @@ export default function LandingPage() {
     return () => obs.disconnect();
   }, []);
 
-  // How section auto-advance
-  useEffect(() => {
-    const section = document.getElementById("how");
-    if (!section) return;
-    const obs = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-        stepTimerRef.current = setInterval(() => {
-          stepIdxRef.current = (stepIdxRef.current + 1) % 4;
-          setActiveStep(stepIdxRef.current);
-        }, 3000);
-      } else {
-        if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
-      }
-    }, { threshold: 0.3 });
-    obs.observe(section);
-    return () => { obs.disconnect(); if (stepTimerRef.current) clearInterval(stepTimerRef.current); };
-  }, []);
-
-  const handleStepClick = (idx: number) => {
-    if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
-    stepIdxRef.current = idx;
-    setActiveStep(idx);
-  };
-
-  // Circular carousel: left, center, right indices
-  const leftIdx   = (activeCard + 2) % 3;
-  const rightIdx  = (activeCard + 1) % 3;
-
   return (
     <div className="bg-[#fdf9f4] text-[#1c1309] overflow-x-hidden font-[var(--font-dm-sans,DM_Sans,sans-serif)]">
 
@@ -227,17 +367,19 @@ export default function LandingPage() {
         id="lp-nav"
         className="fixed top-0 left-0 right-0 z-[999] flex items-center justify-between px-[60px] py-[18px] transition-all duration-300"
       >
-        <a href="#" className="flex items-center gap-2.5 no-underline">
-          <div className="w-8 h-8 bg-[#e07438] rounded-lg flex items-center justify-center shrink-0">
-            <IconMic />
-          </div>
-          <span className="text-lg font-bold text-[#1c1309] tracking-[-0.3px]">Coco</span>
+        <a href="#" className="flex items-center no-underline">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Coco" className="h-9 w-auto" />
         </a>
 
         <div className="flex items-center gap-8">
-          {(["#problem", "#solution", "#how"] as const).map((href, i) => (
+          {[
+            { href: "#problem",    label: "Problem" },
+            { href: "#solution",   label: "Features" },
+            { href: "#caretakers", label: "For Caretakers" },
+          ].map(({ href, label }) => (
             <a key={href} href={href} className="lp-nav-link text-sm text-[#6b5e4a] no-underline">
-              {["The Problem", "Features"][i]}
+              {label}
             </a>
           ))}
         </div>
@@ -255,7 +397,6 @@ export default function LandingPage() {
         id="hero"
         className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden bg-[#fdf9f4] px-[60px] pt-[140px] pb-[80px]"
       >
-        {/* ambient glow */}
         <div
           className="absolute pointer-events-none"
           style={{
@@ -264,7 +405,6 @@ export default function LandingPage() {
             background: "radial-gradient(ellipse,rgba(245,168,0,.10) 0%,transparent 70%)",
           }}
         />
-        {/* dot grid */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -274,87 +414,50 @@ export default function LandingPage() {
           }}
         />
 
-        {/* eyebrow */}
         <div className="lp-anim-eyebrow inline-flex items-center gap-2 bg-[#fff3cc] border border-[rgba(245,168,0,.35)] rounded-[20px] py-[6px] px-4 text-[12.5px] font-semibold text-[#a06a00] tracking-[.05em] uppercase mb-7">
-          <span
-            className="w-[6px] h-[6px] bg-[#e07438] rounded-full shrink-0"
-            style={{ animation: "lp-pulse 2s infinite" }}
-          />
+          <span className="w-[6px] h-[6px] bg-[#e07438] rounded-full shrink-0" style={{ animation: "lp-pulse 2s infinite" }} />
           A new kind of tech support
         </div>
 
-        {/* headline */}
-        <h1
-          className="lp-anim-title font-bold leading-none mb-6 text-[#1c1309] tracking-[-3px]"
-          style={{ fontSize: "clamp(64px,9vw,116px)" }}
-        >
+        <h1 className="lp-anim-title font-bold leading-none mb-6 text-[#1c1309] tracking-[-3px]" style={{ fontSize: "clamp(64px,9vw,116px)" }}>
           Meet <span className="text-[#e07438]">Coco.</span>
         </h1>
 
-        {/* subtitle */}
-        <p
-          className="lp-anim-sub text-[#6b5e4a] max-w-[520px] leading-[1.7] mx-auto font-normal"
-          style={{ fontSize: "clamp(16px,1.6vw,20px)" }}
-        >
-          A <strong className="text-[#1c1309] font-semibold">voice AI</strong> your elderly loved one can call any time — patient, warm, jargon-free — so families can finally rest easy.
+        <p className="lp-anim-sub text-[#6b5e4a] max-w-[520px] leading-[1.7] mx-auto font-normal" style={{ fontSize: "clamp(16px,1.6vw,20px)" }}>
+          A <strong className="text-[#1c1309] font-semibold">voice AI</strong> your loved ones can call any time for tech support.
         </p>
 
-        {/* CTA buttons */}
         <div className="lp-anim-actions flex items-center gap-3.5 justify-center mt-11">
-          <Link
-            href="/auth/signup"
-            className="lp-btn-primary bg-[#1c1309] text-[#fdf9f4] py-[14px] px-8 rounded-xl text-[15px] font-bold no-underline inline-flex items-center gap-2"
-          >
+          <Link href="/auth/signup" className="lp-btn-primary bg-[#1c1309] text-[#fdf9f4] py-[14px] px-8 rounded-xl text-[15px] font-bold no-underline inline-flex items-center gap-2">
             Get early access <IconArrowRight />
           </Link>
-          <a
-            href="#problem"
-            className="lp-btn-ghost text-[#6b5e4a] py-[14px] px-6 rounded-xl text-[15px] font-medium no-underline inline-flex items-center gap-2 border border-[#ecdecb]"
-          >
+          <a href="#problem" className="lp-btn-ghost text-[#6b5e4a] py-[14px] px-6 rounded-xl text-[15px] font-medium no-underline inline-flex items-center gap-2 border border-[#ecdecb]">
             See the problem →
           </a>
         </div>
 
-        {/* Phone mockup */}
         <div className="lp-anim-phone mt-[72px] relative inline-block">
           <div
             className="relative overflow-hidden rounded-[36px] border border-[#ecdecb]"
-            style={{
-              width: 260, height: 480,
-              background: "linear-gradient(160deg,#fffcf7,#fdf3e3)",
-              boxShadow: "0 40px 80px rgba(28,19,9,.12),0 0 0 1px rgba(245,168,0,.08)",
-            }}
+            style={{ width: 260, height: 480, background: "linear-gradient(160deg,#fffcf7,#fdf3e3)", boxShadow: "0 40px 80px rgba(28,19,9,.12),0 0 0 1px rgba(245,168,0,.08)" }}
           >
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[70px] h-[6px] bg-[#ecdecb] rounded-full" />
             <div className="absolute inset-3 bg-[#faf5ec] rounded-[26px] flex flex-col items-center justify-center gap-3.5 p-5">
               <div className="flex items-center gap-1.5 bg-[#fff3cc] border border-[rgba(245,168,0,.3)] rounded-[20px] py-[5px] px-3">
-                <div
-                  className="w-[6px] h-[6px] bg-[#e07438] rounded-full"
-                  style={{ animation: "lp-pulse 1.5s infinite" }}
-                />
+                <div className="w-[6px] h-[6px] bg-[#e07438] rounded-full" style={{ animation: "lp-pulse 1.5s infinite" }} />
                 <span className="text-[11px] text-[#a06a00] font-semibold">Call in progress</span>
               </div>
               <WaveBars delays={[0, .1, .2, .3, .2, .1, 0]} />
               <div className="text-[11px] text-[#9e8e7a] tracking-[.06em] uppercase">Coco is speaking</div>
             </div>
           </div>
-
-          {/* floating badge 1 */}
-          <div
-            className="absolute bg-white border border-[#ecdecb] rounded-xl px-3.5 py-2.5 whitespace-nowrap"
-            style={{ right: -80, top: 60, boxShadow: "0 4px 20px rgba(28,19,9,.08)", animation: "lp-float-badge 4s ease-in-out infinite" }}
-          >
+          <div className="absolute bg-white border border-[#ecdecb] rounded-xl px-3.5 py-2.5 whitespace-nowrap" style={{ right: -80, top: 60, boxShadow: "0 4px 20px rgba(28,19,9,.08)", animation: "lp-float-badge 4s ease-in-out infinite" }}>
             <div className="text-[10.5px] text-[#9e8e7a] mb-0.5">Scam Shield</div>
             <div className="text-[13px] font-semibold text-[#1c1309]">🛡 Active</div>
           </div>
-
-          {/* floating badge 2 */}
-          <div
-            className="absolute bg-white border border-[#ecdecb] rounded-xl px-3.5 py-2.5 whitespace-nowrap"
-            style={{ left: -100, bottom: 80, boxShadow: "0 4px 20px rgba(28,19,9,.08)", animation: "lp-float-badge 4s ease-in-out infinite", animationDelay: "-2s" }}
-          >
+          <div className="absolute bg-white border border-[#ecdecb] rounded-xl px-3.5 py-2.5 whitespace-nowrap" style={{ left: -100, bottom: 80, boxShadow: "0 4px 20px rgba(28,19,9,.08)", animation: "lp-float-badge 4s ease-in-out infinite", animationDelay: "-2s" }}>
             <div className="text-[10.5px] text-[#9e8e7a] mb-0.5">Caretaker notified</div>
-            <div className="text-[13px] font-semibold text-[#1c1309]">SMS sent to Sarah</div>
+            <div className="text-[13px] font-semibold text-[#1c1309]">SMS sent</div>
           </div>
         </div>
       </section>
@@ -362,33 +465,28 @@ export default function LandingPage() {
       {/* ── Problem ── */}
       <section id="problem" className="bg-[#fff8ee] px-[60px] py-[120px]">
         <div className="max-w-[1100px] mx-auto">
-          {/* header */}
-          <div className="max-w-[560px] mb-16">
-            <div className="lp-reveal-l text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">
-              The Problem
-            </div>
-            <h2
-              className="lp-reveal-l font-bold leading-[1.08] text-[#1c1309] tracking-[-1.5px] mb-5"
-              style={{ fontSize: "clamp(36px,5vw,56px)" }}
-            >
-              Our parents deserve better<br />than being left behind.
+          <div className="max-w-[800px] mb-16">
+            <div className="lp-reveal-l text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">The Problem</div>
+            <h2 className="lp-reveal-l font-bold leading-[1.08] text-[#1c1309] tracking-[-1.5px] mb-5" style={{ fontSize: "clamp(36px,5vw,56px)" }}>
+              Our parents deserve <u>better</u><br />than being left behind.
             </h2>
             <p className="lp-reveal-l text-[17px] text-[#6b5e4a] leading-[1.7]">
-              Technology moves fast. The people who raised us can't always keep up. And the systems meant to help them often make things worse.
+              Technology moves fast. The people who raised us can&apos;t always keep up. And the systems meant to help them often make things worse.
             </p>
           </div>
 
-          {/* problem cards */}
-          <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <div className="grid grid-cols-2 gap-6">
             {PROBLEMS.map((p, i) => (
               <div
                 key={i}
-                className="lp-reveal-s bg-white rounded-2xl p-8 border border-[#ecdecb]"
-                style={{ transitionDelay: `${i * 0.12}s` }}
+                className="lp-reveal-s bg-white rounded-2xl p-8 border border-[#ecdecb] flex gap-6 items-start"
+                style={{ transitionDelay: `${i * 0.1}s` }}
               >
-                <div className="text-4xl mb-5">{p.icon}</div>
-                <h3 className="text-[17px] font-bold text-[#1c1309] mb-3 tracking-[-0.3px]">{p.title}</h3>
-                <p className="text-[15px] text-[#6b5e4a] leading-[1.7]">{p.text}</p>
+                <div className="text-4xl shrink-0 mt-1">{p.icon}</div>
+                <div>
+                  <h3 className="text-[17px] font-bold text-[#1c1309] mb-2.5 tracking-[-0.3px]">{p.title}</h3>
+                  <p className="text-[15px] text-[#6b5e4a] leading-[1.7]">{p.text}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -397,48 +495,44 @@ export default function LandingPage() {
 
       {/* ── Solution / Features Carousel ── */}
       <section id="solution" className="bg-[#1c1309] overflow-hidden py-[120px]">
-        {/* header */}
-        <div className="text-center max-w-[640px] mx-auto mb-16 px-[60px]">
-          <div className="lp-reveal text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">
-            Our solution
-          </div>
-          <h2
-            className="lp-reveal font-bold leading-[1.08] text-white tracking-[-1.5px]"
-            style={{ fontSize: "clamp(36px,5vw,56px)" }}
-          >
+        <div className="text-center max-w-[1000px] mx-auto mb-16 px-[60px]">
+          <div className="lp-reveal text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">Our solution</div>
+          <h2 className="lp-reveal font-bold leading-[1.08] text-white tracking-[-1.5px]" style={{ fontSize: "clamp(36px,5vw,56px)" }}>
             Everything seniors need.<br />Everything caretakers want.
           </h2>
-          <p className="lp-reveal text-[17px] text-[#9e8e7a] leading-[1.7] max-w-[560px] mx-auto mt-4">
-            Coco is a voice AI your loved one can call any time — guided, protected, and monitored by you.
+          <p className="lp-reveal text-[17px] text-[#9e8e7a] leading-[1.7] max-w-[640px] mx-auto mt-4">
+            Coco is a voice-first AI assistant accessible through a simple phone call. Designed for seniors and trusted by families, Coco provides warm, on-demand technical support.
           </p>
         </div>
 
-        {/* Centered card carousel */}
-        <div className="relative overflow-hidden transition-all duration-300" style={{ height: 480 }}>
+        {/* Carousel — center card overlaps side cards */}
+        <div className="relative" style={{ height: 520 }}>
           {/* Left card */}
           <div
-            className="absolute top-1/2 transition-all duration-500 cursor-pointer"
+            className="absolute top-1/2 cursor-pointer"
             style={{
-              width: 380,
+              width: 480,
               left: "50%",
-              transform: "translate(calc(-50% - 420px), -50%) scale(0.87)",
-              opacity: 0.5,
+              transform: "translate(calc(-50% - 430px), -50%) scale(0.88)",
+              opacity: 0.6,
               zIndex: 5,
+              transition: "all 0.55s cubic-bezier(.22,1,.36,1)",
             }}
             onClick={() => setActiveCard(leftIdx)}
           >
             <FeatureCardInner card={FEATURE_CARDS[leftIdx]} isActive={false} />
           </div>
 
-          {/* Center card */}
+          {/* Center card — sits on top, wider, partially covers sides */}
           <div
-            className="absolute top-1/2 transition-all duration-500"
+            className="absolute top-1/2"
             style={{
-              width: 380,
+              width: 540,
               left: "50%",
               transform: "translate(-50%, -50%) scale(1)",
               opacity: 1,
               zIndex: 10,
+              transition: "all 0.55s cubic-bezier(.22,1,.36,1)",
             }}
           >
             <FeatureCardInner card={FEATURE_CARDS[activeCard]} isActive={true} />
@@ -446,13 +540,14 @@ export default function LandingPage() {
 
           {/* Right card */}
           <div
-            className="absolute top-1/2 transition-all duration-500 cursor-pointer"
+            className="absolute top-1/2 cursor-pointer"
             style={{
-              width: 380,
+              width: 480,
               left: "50%",
-              transform: "translate(calc(-50% + 420px), -50%) scale(0.87)",
-              opacity: 0.5,
+              transform: "translate(calc(-50% + 430px), -50%) scale(0.88)",
+              opacity: 0.6,
               zIndex: 5,
+              transition: "all 0.55s cubic-bezier(.22,1,.36,1)",
             }}
             onClick={() => setActiveCard(rightIdx)}
           >
@@ -468,13 +563,11 @@ export default function LandingPage() {
           >
             <IconChevLeft />
           </button>
-          {[0, 1, 2].map(i => (
+          {Array.from({ length: N }, (_, i) => (
             <div
               key={i}
               onClick={() => setActiveCard(i)}
-              className={`h-2 rounded-full cursor-pointer transition-all duration-300 ${
-                activeCard === i ? "w-6 bg-[#e07438]" : "w-2 bg-white/30"
-              }`}
+              className={`h-2 rounded-full cursor-pointer transition-all duration-300 ${activeCard === i ? "w-6 bg-[#e07438]" : "w-2 bg-white/30"}`}
             />
           ))}
           <button
@@ -485,51 +578,56 @@ export default function LandingPage() {
           </button>
         </div>
       </section>
-      
-      {/* ── Caretaker peace of mind -- */}
-      <section className="bg-white px-[60px] py-[120px]">
+
+      {/* ── Caretaker peace of mind ── */}
+      <section id="caretakers" className="bg-white px-[60px] py-[120px]">
         <div className="max-w-[1100px] mx-auto flex flex-col gap-20">
 
-          {/* Section Header */}
           <div className="max-w-[520px]">
-            <div className="text-[11.5px] font-bold uppercase text-[#e07438] mb-3">
-              Caretaker peace of mind
-            </div>
+            <div className="text-[11.5px] font-bold uppercase text-[#e07438] mb-3">Caretaker peace of mind</div>
             <h2 className="text-[48px] font-bold leading-[1.1] tracking-[-1px]">
               Always informed.<br />Never intrusive.
             </h2>
           </div>
 
-          {/* Subsection 1 */}
-          <div className="grid grid-cols-2 gap-16 items-center">
-            <div>
+          {/* Voice Personalisation */}
+          <div className="grid grid-cols-2 gap-16 items-start">
+            <div className="pt-4">
               <h3 className="text-xl font-bold mb-4">Voice Personalisation</h3>
-              <ul className="text-[#6b5e4a] space-y-2 text-[15px]">
-                <li>• Voice: gender, tone, speaking speed</li>
-                <li>• Senior profile: name, phone type (iPhone/Samsung)</li>
-                <li>• Comfort level: adapts based on tech familiarity</li>
+              <ul className="text-[#6b5e4a] space-y-3 text-[15px]">
+                {[
+                  "Voice: gender, tone, speaking speed",
+                  "Senior profile: name, phone type (iPhone / Samsung)",
+                  "Comfort level: adapts based on tech familiarity",
+                ].map(item => (
+                  <li key={item} className="flex gap-3 items-start">
+                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#e07438] flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
               </ul>
             </div>
-
-            <div className="h-[260px] rounded-2xl border border-[#ecdecb] bg-[#fdf9f4] flex items-center justify-center">
-              <span className="text-[#9e8e7a] text-sm">[ Voice setup UI placeholder ]</span>
-            </div>
+            <VoiceSetupDemo />
           </div>
 
-          {/* Subsection 2 */}
-          <div className="grid grid-cols-2 gap-16 items-center">
-            <div>
-              <h3 className="text-xl font-bold mb-4">Smart dashboard</h3>
-              <ul className="text-[#6b5e4a] space-y-2 text-[15px]">
-                <li>• Conversation summaries with key topics</li>
-                <li>• Flags when the senior struggled</li>
-                <li>• Real-time scam alerts</li>
+          {/* Smart Dashboard */}
+          <div className="grid grid-cols-2 gap-16 items-start">
+            <div className="pt-4">
+              <h3 className="text-xl font-bold mb-4">Smart Dashboard</h3>
+              <ul className="text-[#6b5e4a] space-y-3 text-[15px]">
+                {[
+                  "Conversation summaries with key topics",
+                  "Flags when the senior struggled",
+                  "Real-time scam alerts",
+                ].map(item => (
+                  <li key={item} className="flex gap-3 items-start">
+                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#e07438] flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
               </ul>
             </div>
-
-            <div className="h-[260px] rounded-2xl border border-[#ecdecb] bg-[#fdf9f4] flex items-center justify-center">
-              <span className="text-[#9e8e7a] text-sm">[ Dashboard UI placeholder ]</span>
-            </div>
+            <DashboardDemo />
           </div>
 
         </div>
@@ -541,11 +639,8 @@ export default function LandingPage() {
           <div className="lp-reveal flex justify-center text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">
             Get started
           </div>
-          <h2
-            className="lp-reveal font-bold leading-[1.05] text-[#1c1309] mb-[18px] tracking-[-2px]"
-            style={{ fontSize: "clamp(40px,6vw,68px)" }}
-          >
-            Give Harold the help<br />he deserves.<br /><span className="text-[#e07438]">On his terms.</span>
+          <h2 className="lp-reveal font-bold leading-[1.05] text-[#1c1309] mb-[18px] tracking-[-2px]" style={{ fontSize: "clamp(40px,6vw,68px)" }}>
+            Give your loved one<br />the help they deserve.<br /><span className="text-[#e07438]">On their terms.</span>
           </h2>
           <p className="lp-reveal text-lg text-[#6b5e4a] max-w-[440px] mx-auto mb-11 leading-[1.65]">
             Set up takes 5 minutes. Your loved one never has to touch a screen.
@@ -565,41 +660,122 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-[#fdf9f4] py-[80px] overflow-hidden">
-        <div className="text-center mb-10">
-          <div className="text-[11.5px] font-bold uppercase text-[#e07438] mb-2">
-            Built with modern AI stack
+      {/* ── Tech Stack ── */}
+      <section className="bg-[#fdf9f4] py-[100px]">
+        <div className="max-w-[1100px] mx-auto px-[60px] mb-14">
+          <div className="text-center mb-14">
+            <div className="text-[11.5px] font-bold uppercase text-[#e07438] mb-3">Built with modern AI stack</div>
+            <h2 className="text-[36px] font-bold tracking-[-1px] text-[#1c1309]">How Coco works</h2>
+            <p className="text-[#6b5e4a] mt-3 max-w-[500px] mx-auto leading-[1.65] text-[16px]">
+              A purpose-built pipeline that turns a simple phone call into an intelligent, safe, and personalised support session.
+            </p>
+          </div>
+
+          {/* Architecture diagram */}
+          <div className="bg-white rounded-3xl border border-[#ecdecb] p-8 overflow-x-auto" style={{ boxShadow: "0 4px 40px rgba(28,19,9,.06)" }}>
+            {/* Top row: call flow */}
+            <div className="flex items-center justify-between gap-2 min-w-[700px] mb-6">
+              {(
+                [
+                  { emoji: "📞", label: "Senior's Call", sub: "Any phone" },
+                  "arrow",
+                  { img: "/tech/twilio.png", label: "Twilio", sub: "Call routing" },
+                  "arrow",
+                  { img: "/tech/nextjs.png", label: "Coco Backend", sub: "Next.js · Vercel", highlight: true },
+                  "arrow",
+                  { img: "/tech/elevenlabs.png", label: "ElevenLabs", sub: "Voice synthesis" },
+                  "arrow",
+                  { emoji: "🔊", label: "Voice Response", sub: "Back to senior" },
+                ] as const
+              ).map((node, i) => {
+                if (node === "arrow") return (
+                  <div key={i} className="flex items-center gap-0.5 flex-shrink-0">
+                    <div className="w-5 h-[1.5px] bg-[#ecdecb]" />
+                    <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
+                      <path d="M1 1l4 4-4 4" stroke="#ecdecb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                );
+                const n = node as { emoji?: string; img?: string; label: string; sub: string; highlight?: boolean };
+                return (
+                  <div key={i} className={`flex flex-col items-center gap-2 px-3 py-4 rounded-2xl border flex-1 min-w-0 ${n.highlight ? "border-[#e07438] bg-[#fff8f4]" : "border-[#ecdecb] bg-[#fdf9f4]"}`}>
+                    {n.img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={n.img} alt={n.label} className="h-7 w-auto object-contain max-w-[64px]" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    ) : (
+                      <span className="text-2xl">{n.emoji}</span>
+                    )}
+                    <p className={`text-[11px] font-semibold text-center leading-[1.3] ${n.highlight ? "text-[#e07438]" : "text-[#1c1309]"}`}>{n.label}</p>
+                    <p className="text-[9.5px] text-[#9e8e7a] text-center leading-[1.3]">{n.sub}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Vertical connector from Coco Backend */}
+            <div className="flex justify-center mb-0">
+              <div className="w-[1.5px] h-7 bg-[#ecdecb]" />
+            </div>
+
+            {/* Bottom row: intelligence layer */}
+            <div className="flex items-stretch justify-center gap-5 min-w-[700px]">
+              {[
+                { img: "/tech/gemini.png", label: "Gemini AI", sub: "Real-time understanding & scam detection" },
+                { img: "/tech/supabase.png", label: "Supabase", sub: "Logs, alerts & user data" },
+                { emoji: "📊", label: "Caretaker Dashboard", sub: "Call summaries, alerts & controls" },
+              ].map((node, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 px-5 py-4 rounded-2xl border border-[#ecdecb] bg-[#fdf9f4] flex-1 max-w-[260px]">
+                  {node.img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={node.img} alt={node.label} className="h-7 w-auto object-contain max-w-[64px]" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  ) : (
+                    <span className="text-2xl">{node.emoji}</span>
+                  )}
+                  <p className="text-[11px] font-semibold text-[#1c1309] text-center">{node.label}</p>
+                  <p className="text-[9.5px] text-[#9e8e7a] text-center leading-[1.4]">{node.sub}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-16 animate-scroll whitespace-nowrap">
-          {["ElevenLabs", "Supabase", "Next.js", "Vercel", "Gemini"].map((tech, i) => (
-            <div
-              key={i}
-              className="text-[#6b5e4a] text-lg font-semibold opacity-70"
-            >
-              {tech}
-            </div>
-          ))}
+        {/* Tech logo carousel — full width */}
+        <div className="overflow-hidden">
+          <div className="flex gap-16 lp-tech-scroll px-16">
+            {[...TECH_STACK, ...TECH_STACK].map((tech, i) => (
+              <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0 min-w-[80px]">
+                <div className="h-9 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/tech/${tech.file}`}
+                    alt={tech.name}
+                    className="h-full w-auto object-contain max-w-[80px]"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
+                <p className="text-[11px] font-semibold text-[#6b5e4a]">{tech.name}</p>
+                <p className="text-[10px] text-[#9e8e7a]">{tech.role}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── Footer ── */}
       <footer className="bg-[#fdf9f4] border-t border-[#f3ebe0] px-[60px] py-12 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-[#e07438] rounded-[7px] flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" fill="white" opacity=".5" stroke="white" strokeWidth="1.4" />
-              <path d="M2.5 9a5.5 5.5 0 0 0 11 0M8 14.5V12" stroke="white" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span className="text-base font-bold text-[#1c1309]">Coco</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Coco" className="h-7 w-auto" />
         </div>
 
         <div className="flex gap-7">
-          {(["#problem", "#solution", "#how"] as const).map((href, i) => (
+          {[
+            { href: "#problem",    label: "Problem" },
+            { href: "#solution",   label: "Features" },
+            { href: "#caretakers", label: "For Caretakers" },
+          ].map(({ href, label }) => (
             <a key={href} href={href} className="lp-footer-link text-[13px] text-[#9e8e7a] no-underline">
-              {["Problem", "Features"][i]}
+              {label}
             </a>
           ))}
         </div>
@@ -611,31 +787,18 @@ export default function LandingPage() {
   );
 }
 
-// ── Feature card inner (extracted to keep carousel JSX clean) ─────────────────
+// ── Feature card inner ────────────────────────────────────────────────────────
 function FeatureCardInner({ card, isActive }: { card: typeof FEATURE_CARDS[number]; isActive: boolean }) {
   return (
-    <div
-      className={`bg-white rounded-3xl px-9 py-10 relative overflow-hidden border transition-all ${
-        isActive ? "border-[rgba(245,168,0,.4)] shadow-[0_24px_60px_rgba(28,19,9,.18)]" : "border-[#ecdecb]"
-      }`}
-    >
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "linear-gradient(140deg,rgba(245,168,0,.04),transparent 60%)" }}
-      />
+    <div className={`bg-white rounded-3xl px-9 py-10 relative overflow-hidden border transition-all ${isActive ? "border-[rgba(245,168,0,.4)] shadow-[0_24px_60px_rgba(28,19,9,.18)]" : "border-[#ecdecb]"}`}>
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(140deg,rgba(245,168,0,.04),transparent 60%)" }} />
       <div className="text-[11px] font-bold tracking-[.12em] uppercase text-[#9e8e7a] mb-7">{card.num}</div>
-      <div
-        className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mb-[22px]"
-        style={{ background: card.iconBg }}
-      >
+      <div className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mb-[22px]" style={{ background: card.iconBg }}>
         {card.icon}
       </div>
       <div className="text-[22px] font-bold text-[#1c1309] mb-3 tracking-[-0.4px]">{card.title}</div>
       <div className="text-[15px] text-[#6b5e4a] leading-[1.72]">{card.text}</div>
-      <div
-        className="inline-flex items-center gap-[5px] rounded-[20px] py-[5px] px-3 text-[11.5px] font-bold mt-5 tracking-[.03em]"
-        style={{ background: card.tagBg, color: card.tagColor }}
-      >
+      <div className="inline-flex items-center gap-[5px] rounded-[20px] py-[5px] px-3 text-[11.5px] font-bold mt-5 tracking-[.03em]" style={{ background: card.tagBg, color: card.tagColor }}>
         {card.tag}
       </div>
     </div>
