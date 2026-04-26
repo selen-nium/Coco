@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
+import { normalizeTranscriptEntry } from "@/lib/gemini/intelligence-utils.mjs";
+
+const transcriptEntrySchema = z.object({
+  role: z.string(),
+  message: z.string().optional(),
+  text: z.string().optional(),
+  timestamp: z.string().optional(),
+});
+
+const payloadSchema = z.object({
+  transcript: z.array(transcriptEntrySchema).optional().default([]),
+  summary: z.string().optional().nullable(),
+  metadata: z
+    .object({
+      call_log_id: z.string().uuid().optional(),
+    })
+    .optional(),
+});
 
 /**
  * POST /api/intelligence/post-call
@@ -9,7 +28,7 @@ import { embedText, toVectorLiteral } from "@/lib/gemini/client";
  */
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    const payload = payloadSchema.parse(await req.json());
     const { transcript, summary, metadata } = payload;
     
     // ElevenLabs sends metadata back exactly as passed during the connection
@@ -32,16 +51,17 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Process and store the transcript chunks
-    if (Array.isArray(transcript)) {
+    if (transcript.length > 0) {
       const transcriptEntries = await Promise.all(
-        transcript.map(async (entry: any) => {
+        transcript.map(async (entry) => {
+          const message = normalizeTranscriptEntry(entry);
           const isUser = entry.role === "user" || entry.role === "user_proxy";
           let embedding = null;
 
           // Only embed user messages for semantic memory retrieval
-          if (isUser && entry.message && entry.message.trim().length > 0) {
+          if (isUser && message.trim().length > 0) {
             try {
-              const vector = await embedText(entry.message);
+              const vector = await embedText(message);
               embedding = toVectorLiteral(vector);
             } catch (err) {
               console.error("[post-call] Embedding failed for chunk:", err);
@@ -51,16 +71,18 @@ export async function POST(req: NextRequest) {
           return {
             call_log_id,
             speaker: isUser ? "user" : "agent",
-            text: entry.message || "",
+            text: message,
             embedding,
-            timestamp: new Date().toISOString(),
+            timestamp: entry.timestamp ?? new Date().toISOString(),
           };
         })
       );
 
+      const filteredEntries = transcriptEntries.filter((entry) => entry.text.trim().length > 0);
+
       const { error: insertError } = await supabase
         .from("call_transcripts")
-        .insert(transcriptEntries);
+        .insert(filteredEntries);
 
       if (insertError) {
         console.error("[post-call] Failed to insert transcript:", insertError);
@@ -71,6 +93,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[post-call] Internal Error:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

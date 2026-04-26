@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
+import { buildMemoryText } from "@/lib/gemini/intelligence-utils.mjs";
+
+const requestSchema = z.object({
+  query: z.string().trim().min(1),
+  elderly_user_id: z.string().uuid(),
+});
+
+type MemoryMatch = {
+  text: string;
+  timestamp: string;
+  similarity: number;
+};
 
 /**
  * POST /api/tools/recall-memory
@@ -9,11 +22,7 @@ import { embedText, toVectorLiteral } from "@/lib/gemini/client";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { query, elderly_user_id } = await req.json();
-
-    if (!query || !elderly_user_id) {
-      return NextResponse.json({ error: "Missing query or elderly_user_id" }, { status: 400 });
-    }
+    const { query, elderly_user_id } = requestSchema.parse(await req.json());
 
     const supabase = await createServiceClient();
     
@@ -41,18 +50,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const context = matches
-      .map((m: any) => `- On ${new Date(m.timestamp).toLocaleDateString()}, the user said: "${m.text}"`)
-      .join("\n");
+    const snippets = (matches as MemoryMatch[]).map((match) => ({
+      text: match.text,
+      timestamp: match.timestamp,
+      similarity: match.similarity,
+    }));
+
+    const memory = buildMemoryText(snippets);
 
     console.log("[recall-memory] Found memory for user:", elderly_user_id);
 
     return NextResponse.json({ 
       success: true, 
-      memory: context 
+      memory,
+      snippets,
     });
   } catch (error) {
     console.error("[recall-memory] Error:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

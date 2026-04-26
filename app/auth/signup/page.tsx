@@ -69,7 +69,6 @@ export default function SignupPage() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [caretakerId, setCaretakerId] = useState("");
   const [elderlyUserId, setElderlyUserId] = useState("");
   const [demoCode, setDemoCode] = useState("");
   const [enteredCode, setEnteredCode] = useState("");
@@ -77,8 +76,6 @@ export default function SignupPage() {
   const [profile, setProfile] = useState<ProfileData>({ firstName: "", lastName: "", email: "", phone: "", password: "" });
   const [elderly, setElderly] = useState<ElderlyData>({ name: "", age: "", phone: "", nickname: "", phoneModel: "" });
   const [agent, setAgent] = useState<AgentData>({ voice: "warm-female", speed: 1.0, metaphor: true });
-
-  const supabase = createClient();
 
   async function handleStep1() {
     setLoading(true); setError("");
@@ -93,6 +90,7 @@ export default function SignupPage() {
       if (!signupRes.ok) throw new Error(signupJson.error ?? "Signup failed");
 
       // Sign in to establish a session in the browser
+      const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: profile.email,
         password: profile.password,
@@ -111,7 +109,6 @@ export default function SignupPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to create profile");
-      setCaretakerId(json.id);
       setStep(2);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong");
