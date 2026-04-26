@@ -61,53 +61,64 @@ export default async function CallsPage({
       </div>
 
       <Card className="overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
-            <tr>
-              {["Date & Time", "Duration", "Sentiment", "Conversation Summary"].map((h) => (
-                <th key={h} className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#e8e4de]">
-            {normalizedCalls.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-[#888] text-sm">
-                  No calls found.
-                </td>
+                <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
+                  Date & Time
+                </th>
+                <th className="hidden sm:table-cell px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
+                  Duration
+                </th>
+                <th className="hidden md:table-cell px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
+                  Sentiment
+                </th>
+                <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
+                  Conversation Summary
+                </th>
               </tr>
-            ) : (
-              normalizedCalls.map((call) => (
-                <tr key={call.id} className="hover:bg-[#f5f4f0] transition-colors">
-                  <td className="px-5 py-3.5">
-                    <Link
-                      href={`/dashboard/calls/${call.id}`}
-                      className="font-medium text-[#1a1208] hover:text-[#e8733b] transition-colors"
-                    >
-                      {new Date(call.started_at).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        timeZone: "America/Los_Angeles",
-                      })}
-                    </Link>
-                  </td>
-                  <td className="px-5 py-3.5 text-[#666]">{formatDuration(call.duration_seconds)}</td>
-                  <td className="px-5 py-3.5 text-[#666]">
-                    {call.intent_text ?? "—"}
-                  </td>
-                  <td className="max-w-md px-5 py-3.5 text-[#666]">
-                    {call.summary ?? "Summary pending"}
+            </thead>
+            <tbody className="divide-y divide-[#e8e4de]">
+              {normalizedCalls.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-10 text-center text-[#888] text-sm">
+                    No calls found.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                normalizedCalls.map((call) => (
+                  <tr key={call.id} className="hover:bg-[#f5f4f0] transition-colors">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <Link
+                        href={`/dashboard/calls/${call.id}`}
+                        className="font-medium text-[#1a1208] hover:text-[#e8733b] transition-colors"
+                      >
+                        {new Date(call.started_at).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          timeZone: "America/Los_Angeles",
+                        })}
+                      </Link>
+                    </td>
+                    <td className="hidden sm:table-cell px-5 py-3.5 text-[#666] whitespace-nowrap">
+                      {formatDuration(call.duration_seconds)}
+                    </td>
+                    <td className="hidden md:table-cell px-5 py-3.5 text-[#666] whitespace-nowrap">
+                      {call.intent_text ?? "—"}
+                    </td>
+                    <td className="px-5 py-3.5 text-[#666] min-w-[200px] max-w-md">
+                      {call.summary ?? "Summary pending"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {/* Pagination */}
