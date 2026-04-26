@@ -31,6 +31,12 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("[api/dashboard/elderly POST] DB error:", JSON.stringify(error));
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "That phone number is already linked to an account. Please use a different number." },
+          { status: 409 }
+        );
+      }
       throw error;
     }
 
