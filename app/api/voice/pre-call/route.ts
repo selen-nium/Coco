@@ -9,7 +9,7 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
   if (!phone || !call_sid) {
     console.error("[voice/pre-call] Missing phone or call_sid. Received:", { phone, call_sid });
     // Still return the correct structure to not crash ElevenLabs, but without dynamic vars
-    return NextResponse.json({ type: "conversation_initiation_client_data" });
+    return NextResponse.json({});
   }
 
   const supabase = await createServiceClient();
@@ -24,13 +24,8 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
   if (userError || !elderlyUser) {
     // Return a configuration override that tells the Agent the user is not found
     return NextResponse.json({
-      type: "conversation_initiation_client_data",
-      conversation_config_override: {
-        agent: {
-          prompt: {
-            prompt: "The caller's phone number is unregistered. Please politely inform them that this number is not registered with Coco and hang up."
-          }
-        }
+      overrides: {
+        system_prompt: "The caller's phone number is unregistered. Please politely inform them that this number is not registered with Coco and hang up."
       }
     });
   }
@@ -51,7 +46,7 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
 
   if (logError) {
     console.error("[voice/pre-call] Failed to create or update call log:", logError);
-    return NextResponse.json({ type: "conversation_initiation_client_data" });
+    return NextResponse.json({});
   }
 
   // 3. Fetch recent history for immediate memory
@@ -70,9 +65,8 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
   const agentConfig = elderlyUser.agent_configs[0] || { metaphor_mode: false };
   const caretakerPhone = elderlyUser.caretakers?.phone || "Unknown";
 
-  // 4. Return the Conversation Initiation Client Data payload
+  // 4. Return the new standard ElevenLabs Webhook Response payload
   return NextResponse.json({
-    type: "conversation_initiation_client_data",
     dynamic_variables: {
       user_name: elderlyUser.name,
       elderly_user_id: elderlyUser.id,
@@ -81,12 +75,9 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
       caretaker_phone: caretakerPhone,
       recent_history: recentHistory
     },
-    conversation_config_override: {
-      agent: {
-        prompt: {
-          prompt: `Greet the user by saying 'Hi ${elderlyUser.name}'. Their recent history is: ${recentHistory}`
-        }
-      }
+    overrides: {
+      first_message: `Hi ${elderlyUser.name}!`,
+      system_prompt: `You are Coco. You are talking to ${elderlyUser.name}. Their recent history is: ${recentHistory}`
     }
   });
 }
@@ -116,10 +107,9 @@ export async function POST(req: NextRequest) {
 
     const payload = JSON.parse(rawBody || "{}");
     
-    // ElevenLabs might pass the phone in various fields depending on the integration type
-    // Try to extract caller ID from the body or custom_data
-    const phone = payload.caller_id || payload.system__caller_id || payload.custom_data?.caller_id || payload.from || payload.From;
-    const call_sid = payload.call_id || payload.system__call_sid || payload.custom_data?.call_sid || payload.CallSid;
+    // Extract using the new native ElevenLabs webhook schema
+    const phone = payload.caller_phone_number || payload.caller_id || payload.system__caller_id || payload.custom_data?.caller_id || payload.from || payload.From;
+    const call_sid = payload.conversation_id || payload.call_id || payload.system__call_sid || payload.custom_data?.call_sid || payload.CallSid;
 
     return await handleLookup(phone, call_sid);
   } catch (error) {
@@ -135,8 +125,8 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
-    const phone = searchParams.get("phone") || searchParams.get("caller_id");
-    const call_sid = searchParams.get("call_sid") || searchParams.get("call_id");
+    const phone = searchParams.get("caller_phone_number") || searchParams.get("phone") || searchParams.get("caller_id");
+    const call_sid = searchParams.get("conversation_id") || searchParams.get("call_sid") || searchParams.get("call_id");
     
     return await handleLookup(phone, call_sid);
   } catch (error) {
