@@ -71,6 +71,7 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
       user_name: elderlyUser.name,
       elderly_user_id: elderlyUser.id,
       call_log_id: callLog.id,
+      call_sid: call_sid,
       metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
       caretaker_phone: caretakerPhone,
       recent_history: recentHistory,

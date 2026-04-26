@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = JSON.parse(rawBody || "{}");
+    console.log("[post-call] Received payload type:", payload.type);
 
     // Handle both new (post_call_transcription) and legacy payload shapes
     const isNewSchema = payload.type === "post_call_transcription" && payload.data;
@@ -58,8 +59,15 @@ export async function POST(req: NextRequest) {
 
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
-    const sentiment = data.analysis?.user_sentiment_at_end || data.user_sentiment_at_end;
+    const sentiment = data.analysis?.user_sentiment_at_end || data.user_sentiment_at_end || payload.user_sentiment_at_end;
     const duration = data.metadata?.call_duration_secs || data.call_duration_secs;
+
+    console.log("[post-call] Extracted values:", { 
+      hasSummary: !!summary, 
+      sentiment, 
+      duration,
+      call_log_id_source: !!(data.conversation_initiation_client_data?.dynamic_variables?.call_log_id || data.metadata?.call_log_id || data.custom_data?.call_log_id)
+    });
 
     const supabase = await createServiceClient();
 

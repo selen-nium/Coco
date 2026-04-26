@@ -27,7 +27,7 @@ export const configUpdateSchema = z.object({
 });
 
 export const dismissAlertSchema = z.object({
-  status: z.enum(["inactive", "dismissed"]),
+  status: z.enum(["active", "dismissed"]),
 });
 
 export const flowStepSchema = z.object({

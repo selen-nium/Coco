@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
     metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
     caretaker_phone: caretakerPhone,
     call_log_id: callLog.id,
+    call_sid: CallSid,
     elderly_user_id: elderlyUser.id,
     recent_history: recentHistory
   };
