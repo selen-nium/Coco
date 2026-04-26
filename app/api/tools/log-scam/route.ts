@@ -11,22 +11,40 @@ const logScamSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { call_sid, details, keywords, severity } = logScamSchema.parse(
-      await req.json()
-    );
+    const body = await req.json();
+    const { call_sid, details, keywords, severity } = logScamSchema.parse(body);
 
     const supabase = await createServiceClient();
     
-    // First lookup the call_log_id
-    const { data: callLog, error: logError } = await supabase
+    // Determine if call_sid is a UUID or a Twilio/ElevenLabs ID
+    const isUuid = z.string().uuid().safeParse(call_sid).success;
+    
+    let query = supabase
       .from("call_logs")
-      .select("id, elderly_user_id")
-      .eq("twilio_call_sid", call_sid)
-      .single();
+      .select("id, elderly_user_id, twilio_call_sid");
 
-    if (logError || !callLog) {
-      return NextResponse.json({ error: "Call log not found" }, { status: 404 });
+    if (isUuid) {
+      query = query.eq("id", call_sid);
+    } else {
+      query = query.eq("twilio_call_sid", call_sid);
     }
+
+    const { data: callLog, error: logError } = await query.maybeSingle();
+
+    if (logError) {
+      console.error("[tools/log-scam] Database error during lookup:", logError);
+      return NextResponse.json({ error: "Database error" }, { status: 500 });
+    }
+
+    if (!callLog) {
+      console.error(`[tools/log-scam] Call log not found for SID: ${call_sid} (isUuid: ${isUuid})`);
+      return NextResponse.json({ 
+        error: "Call log not found",
+        details: `No record found for ${isUuid ? 'UUID' : 'SID'} ${call_sid}`
+      }, { status: 404 });
+    }
+
+    console.log(`[tools/log-scam] Found call log: ${callLog.id} for user: ${callLog.elderly_user_id}`);
 
     const [{ error: interventionError }, { error: alertError }, { error: statusError }] =
       await Promise.all([
