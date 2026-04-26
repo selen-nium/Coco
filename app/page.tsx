@@ -522,10 +522,10 @@ export default function LandingPage() {
         <div className="text-center max-w-[1000px] mx-auto mb-12 md:mb-16 px-5 sm:px-10 md:px-[60px]">
           <div className="lp-reveal text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">Our solution</div>
           <h2 className="lp-reveal font-bold leading-[1.08] text-white tracking-[-1.5px]" style={{ fontSize: "clamp(30px,5vw,56px)" }}>
-            Everything seniors need.<br />Everything caretakers want.
+            Coco,<br />A voice-first AI assistant accessible through a simple phone call
           </h2>
           <p className="lp-reveal text-[16px] md:text-[17px] text-[#9e8e7a] leading-[1.7] max-w-[640px] mx-auto mt-4">
-            Coco is a voice-first AI assistant accessible through a simple phone call. Designed for seniors and trusted by families, Coco provides warm, on-demand technical support.
+            Designed for seniors and trusted by families, Coco provides warm, on-demand technical support.
           </p>
         </div>
 
