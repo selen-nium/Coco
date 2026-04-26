@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Coco — A patient voice for the ones you love",
   description: "A voice AI your elderly loved one can call any time — patient, warm, jargon-free — so families can finally rest easy.",
+  icons: {
+    icon: "/logo.png"
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
