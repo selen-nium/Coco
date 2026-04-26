@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
@@ -9,7 +10,29 @@ import { embedText, toVectorLiteral } from "@/lib/gemini/client";
  */
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    const rawBody = await req.text();
+    const signature = req.headers.get("elevenlabs-signature");
+    
+    // The shared secret provided by ElevenLabs
+    const secret = process.env.ELEVENLABS_WEBHOOK_SECRET || "wsec_625da311609f0fb97cf6aa0c1f48b7da3ec27072acae379b0172f51afdc27737";
+
+    if (!signature) {
+      console.error("[post-call] Missing ElevenLabs signature");
+      return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+    }
+
+    // Verify HMAC SHA256 signature
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(rawBody)
+      .digest("hex");
+
+    if (crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature)) === false) {
+      console.error("[post-call] Invalid HMAC signature. Unauthorized request.");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    const payload = JSON.parse(rawBody);
     const { transcript, summary, metadata } = payload;
     
     // ElevenLabs sends metadata back exactly as passed during the connection
