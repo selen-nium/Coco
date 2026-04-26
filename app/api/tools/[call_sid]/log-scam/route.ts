@@ -3,16 +3,19 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const logScamSchema = z.object({
-  call_sid: z.string().min(1),
   details: z.string().optional().default(""),
   keywords: z.array(z.string()).optional().default([]),
   severity: z.enum(["high", "critical"]).optional().default("high"),
 });
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ call_sid: string }> }
+) {
   try {
+    const { call_sid } = await params;
     const body = await req.json();
-    const { call_sid, details, keywords, severity } = logScamSchema.parse(body);
+    const { details, keywords, severity } = logScamSchema.parse(body);
 
     const supabase = await createServiceClient();
     

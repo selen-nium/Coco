@@ -3,10 +3,12 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { updateSession } from "@/lib/state/call-session";
 import { z } from "zod";
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ call_sid: string }> }
+) {
   try {
-    const body = await req.json();
-    const { call_sid } = body;
+    const { call_sid } = await params;
 
     if (!call_sid) {
       return NextResponse.json({ error: "Missing call_sid" }, { status: 400 });
