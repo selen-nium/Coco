@@ -122,12 +122,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing metadata" }, { status: 200 });
     }
 
+    // Embed the summary for high-level RAG
+    let summaryEmbedding = null;
+    if (summary && summary.trim().length > 0) {
+      try {
+        const vector = await embedText(summary);
+        summaryEmbedding = toVectorLiteral(vector);
+        console.log("[post-call] Generated embedding for summary");
+      } catch (err) {
+        console.error("[post-call] Summary embedding failed:", err);
+      }
+    }
 
     if (summary || sentiment || duration) {
       await supabase
         .from("call_logs")
         .update({ 
           summary,
+          embedding: summaryEmbedding,
           intent_text: sentiment,
           duration_seconds: duration,
           status: "completed"
@@ -136,35 +148,22 @@ export async function POST(req: NextRequest) {
     }
 
     if (Array.isArray(transcript) && transcript.length > 0) {
-      const transcriptEntries = await Promise.all(
-        transcript.map(async (entry: any) => {
-          const message = normalizeTranscriptEntry(entry);
-          const isUser = entry.role === "user" || entry.role === "user_proxy";
-          let embedding = null;
+      const transcriptEntries = transcript.map((entry: any) => {
+        const message = normalizeTranscriptEntry(entry);
+        const isUser = entry.role === "user" || entry.role === "user_proxy";
 
-          if (isUser && message.trim().length > 0) {
-            try {
-              const vector = await embedText(message);
-              embedding = toVectorLiteral(vector);
-            } catch (err) {
-              console.error("[post-call] Embedding failed for chunk:", err);
-            }
-          }
+        return {
+          call_log_id,
+          speaker: isUser ? "user" : "agent",
+          text: message,
+          embedding: null, // Stopped embedding individual transcript entries per instructions
+          timestamp: entry.timestamp ?? new Date().toISOString(),
+        };
+      });
 
-          return {
-            call_log_id,
-            speaker: isUser ? "user" : "agent",
-            text: message,
-            embedding,
-            timestamp: entry.timestamp ?? new Date().toISOString(),
-          };
-        })
-      );
+      const filteredEntries = transcriptEntries.filter((entry: any) => entry.text.trim().length > 0);
 
-      const filteredEntries = transcriptEntries.filter((entry) => entry.text.trim().length > 0);
-      const embeddingCount = filteredEntries.filter(e => e.embedding).length;
-
-      console.log(`[post-call] Saving ${filteredEntries.length} transcript entries (${embeddingCount} with embeddings) for call:`, call_log_id);
+      console.log(`[post-call] Saving ${filteredEntries.length} transcript entries (no embeddings) for call:`, call_log_id);
 
       const { error: insertError } = await supabase
         .from("call_transcripts")

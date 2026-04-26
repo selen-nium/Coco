@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
-import { buildMemoryText } from "@/lib/gemini/intelligence-utils.mjs";
 
 const requestSchema = z.object({
   query: z.string().trim().min(1),
@@ -10,15 +9,16 @@ const requestSchema = z.object({
   call_log_id: z.string().uuid().optional(),
 });
 
-type MemoryMatch = {
-  text: string;
-  timestamp: string;
+type SummaryMatch = {
+  summary: string;
+  started_at: string;
   similarity: number;
 };
 
 /**
  * POST /api/tools/recall-memory
  * Server Tool for ElevenLabs Agent to search past conversation history.
+ * Updated to search call summaries for better high-level fact retrieval.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -46,13 +46,13 @@ export async function POST(req: NextRequest) {
     }
 
     const embedding = await embedText(query);
-    console.log("[recall-memory] Searching memory for query:", query, "user:", elderly_user_id);
+    console.log("[recall-memory] Searching summaries for query:", query, "user:", elderly_user_id);
 
-    const { data: matches, error } = await supabase.rpc("match_memory", {
+    const { data: matches, error } = await supabase.rpc("match_call_summaries", {
       query_embedding: toVectorLiteral(embedding),
       elderly_id: elderly_user_id,
-      match_threshold: 0.5, // Lowered threshold for better retrieval
-      match_count: 5,
+      match_threshold: 0.4, // Lowered threshold for broad summary matching
+      match_count: 3,
     });
 
     if (error) {
@@ -61,26 +61,24 @@ export async function POST(req: NextRequest) {
     }
 
     if (!matches || matches.length === 0) {
-      console.log("[recall-memory] No matches found for query:", query);
+      console.log("[recall-memory] No matching summaries found.");
       return NextResponse.json({
         success: true,
-        memory: "I searched the past conversations but couldn't find any specific information about that.",
+        memory: "I searched the past conversation summaries but couldn't find any specific information about that.",
       });
     }
 
-    console.log(`[recall-memory] Found ${matches.length} matches for user:`, elderly_user_id);
-    
-    const snippets = (matches as MemoryMatch[]).map((match) => {
-      console.log(`[recall-memory] Match: "${match.text.substring(0, 50)}..." Similarity: ${match.similarity.toFixed(4)}`);
-      return {
-        text: match.text,
-        timestamp: match.timestamp,
-        similarity: match.similarity,
-      };
+    console.log(`[recall-memory] Found ${matches.length} matching summaries`);
+
+    const memoryBlocks = (matches as SummaryMatch[]).map((match) => {
+      const date = new Date(match.started_at).toLocaleDateString();
+      console.log(`[recall-memory] Match (${match.similarity.toFixed(4)}): ${match.summary.substring(0, 100)}...`);
+      return `Summary of conversation on ${date}: "${match.summary}"`;
     });
 
-    const memory = buildMemoryText(snippets);
-    return NextResponse.json({ success: true, memory, snippets });
+    const memory = memoryBlocks.join("\n\n");
+
+    return NextResponse.json({ success: true, memory });
   } catch (error) {
     console.error("[recall-memory] Error:", error);
     if (error instanceof z.ZodError) {

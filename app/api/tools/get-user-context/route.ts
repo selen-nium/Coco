@@ -13,11 +13,12 @@ export async function POST(req: NextRequest) {
 
     const { data: elderlyUser, error: userError } = await supabase
       .from("elderly_users")
-      .select("name")
+      .select("name, age, nickname, phone_model")
       .eq("id", elderly_user_id)
       .single();
 
     if (userError || !elderlyUser) {
+      console.error("[tools/get-user-context] User not found:", elderly_user_id);
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -30,11 +31,15 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (configError) {
+      console.error("[tools/get-user-context] Config error:", configError);
       throw configError;
     }
 
     return NextResponse.json({
       name: elderlyUser.name,
+      age: elderlyUser.age,
+      nickname: elderlyUser.nickname,
+      phone_model: elderlyUser.phone_model,
       agent_config: {
         elevenlabs_voice_id: agentConfig?.elevenlabs_voice_id ?? "default",
         tts_speed: agentConfig?.tts_speed ?? 1,
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[tools/get-user-context]", error);
+    console.error("[tools/get-user-context] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch user context" },
       { status: 500 }
