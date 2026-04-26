@@ -9,21 +9,35 @@ import { embedText, toVectorLiteral } from "@/lib/gemini/client";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { query, elderly_user_id } = await req.json();
+    const { query, phone } = await req.json();
 
-    if (!query || !elderly_user_id) {
-      return NextResponse.json({ error: "Missing query or elderly_user_id" }, { status: 400 });
+    if (!query || !phone) {
+      return NextResponse.json({ error: "Missing query or phone" }, { status: 400 });
     }
 
     const supabase = await createServiceClient();
     
-    // 1. Embed the search query
+    // 1. Lookup the elderly user by phone
+    const { data: elderlyUser, error: userError } = await supabase
+      .from("elderly_users")
+      .select("id")
+      .eq("phone", phone)
+      .single();
+
+    if (userError || !elderlyUser) {
+      return NextResponse.json({ 
+        success: false, 
+        memory: "User not found. Cannot search memory." 
+      });
+    }
+
+    // 2. Embed the search query
     const embedding = await embedText(query);
 
-    // 2. Perform similarity search filtered by the specific elderly user
+    // 3. Perform similarity search filtered by the specific elderly user
     const { data: matches, error } = await supabase.rpc("match_memory", {
       query_embedding: toVectorLiteral(embedding),
-      elderly_id: elderly_user_id,
+      elderly_id: elderlyUser.id,
       match_threshold: 0.7,
       match_count: 5,
     });
@@ -33,7 +47,7 @@ export async function POST(req: NextRequest) {
       throw error;
     }
 
-    // 3. Format matches into a context string for the AI
+    // 4. Format matches into a context string for the AI
     if (!matches || matches.length === 0) {
       return NextResponse.json({ 
         success: true, 
@@ -45,7 +59,7 @@ export async function POST(req: NextRequest) {
       .map((m: any) => `- On ${new Date(m.timestamp).toLocaleDateString()}, the user said: "${m.text}"`)
       .join("\n");
 
-    console.log("[recall-memory] Found memory for user:", elderly_user_id);
+    console.log("[recall-memory] Found memory for user:", elderlyUser.id);
 
     return NextResponse.json({ 
       success: true, 
