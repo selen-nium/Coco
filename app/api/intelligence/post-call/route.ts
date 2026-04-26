@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
 
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
+    const sentiment = data.analysis?.user_sentiment_at_end || data.user_sentiment_at_end;
+    const duration = data.metadata?.call_duration_secs || data.call_duration_secs;
 
     const supabase = await createServiceClient();
 
@@ -89,10 +91,14 @@ export async function POST(req: NextRequest) {
     }
 
 
-    if (summary) {
+    if (summary || sentiment || duration) {
       await supabase
         .from("call_logs")
-        .update({ summary })
+        .update({ 
+          summary,
+          intent_text: sentiment,
+          duration_seconds: duration
+        })
         .eq("id", call_log_id);
     }
 
