@@ -326,6 +326,7 @@ export default function LandingPage() {
   const [activeCard, setActiveCard] = useState(0);
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const currentSectionIdxRef = useRef(0);
+  const [archOpen, setArchOpen] = useState(false);
 
   const N        = FEATURE_CARDS.length;
   const leftIdx  = (activeCard - 1 + N) % N;
@@ -626,8 +627,44 @@ export default function LandingPage() {
 
           {/* Architecture diagram */}
           <div className="mb-12 md:mb-16">
-            <ArchDiagram />
+            <button
+              type="button"
+              onClick={() => setArchOpen(true)}
+              className="w-full text-left group relative cursor-zoom-in"
+              aria-label="View architecture diagram fullscreen"
+            >
+              <ArchDiagram />
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-black/50 px-3 py-1.5 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none select-none">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Click to expand
+              </div>
+            </button>
           </div>
+
+          {/* Lightbox */}
+          {archOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8"
+              onClick={() => setArchOpen(false)}
+            >
+              <div
+                className="relative w-full max-w-[1400px] rounded-2xl bg-white overflow-auto max-h-[90vh]"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setArchOpen(false)}
+                  className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition-colors"
+                  aria-label="Close"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="#1a0800" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                </button>
+                <div className="p-4 md:p-6">
+                  <ArchDiagram />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tech logos — static horizontal list */}
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
