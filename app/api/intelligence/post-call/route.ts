@@ -27,7 +27,11 @@ export async function POST(req: NextRequest) {
       .update(rawBody)
       .digest("hex");
 
-    if (crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature)) === false) {
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    // timingSafeEqual throws an error if buffer lengths don't match
+    if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       console.error("[post-call] Invalid HMAC signature. Unauthorized request.");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
