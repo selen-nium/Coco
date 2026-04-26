@@ -66,14 +66,18 @@ export async function POST(req: NextRequest) {
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
     
-    // Broaden sentiment extraction search
+    // 1. Extract sentiment from Data Collection results array
+    const dataCollection = data.analysis?.data_collection_results || [];
+    const sentimentResult = dataCollection.find(
+      (item: any) => item.data_collection_id === "user_sentiment_at_end"
+    );
+    
+    // 2. Fallback chain for sentiment
     const sentiment = 
+      sentimentResult?.value ||
       data.analysis?.user_sentiment_at_end || 
       data.user_sentiment_at_end || 
-      payload.analysis?.user_sentiment_at_end ||
-      payload.user_sentiment_at_end ||
-      data.analysis?.sentiment ||
-      data.sentiment;
+      payload.user_sentiment_at_end;
 
     const duration = data.metadata?.call_duration_secs || data.call_duration_secs || data.metadata?.duration_secs;
 
