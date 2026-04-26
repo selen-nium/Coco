@@ -7,7 +7,7 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PhoneModelSelect } from "@/components/ui/PhoneModelSelect";
 import { Switch } from "@/components/ui/Switch";
 
-type Step = 1 | 2 | "2verify" | 3;
+type Step = 1 | 2 | "2verify" | 3 | "done";
 
 interface ProfileData {
   firstName: string;
@@ -34,7 +34,7 @@ interface AgentData {
 const STEP_LABELS = ["Your profile", "Link loved one", "Set up agent"];
 
 function StepIndicator({ current }: { current: Step }) {
-  const currentNum = current === "2verify" ? 2 : (current as number);
+  const currentNum = current === "2verify" ? 2 : current === "done" ? 4 : (current as number);
   return (
     <div className="flex items-center gap-0">
       {STEP_LABELS.map((label, i) => {
@@ -75,6 +75,7 @@ export default function SignupPage() {
   const [demoCode, setDemoCode] = useState("");
   const [enteredCode, setEnteredCode] = useState("");
 
+  const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({ firstName: "", lastName: "", email: "", phone: "", password: "" });
   const [elderly, setElderly] = useState<ElderlyData>({ name: "", age: "", phone: "", nickname: "", phoneModel: "" });
   const [agent, setAgent] = useState<AgentData>({ voice: "warm-female", speed: 1.0, metaphor: true });
@@ -177,7 +178,7 @@ export default function SignupPage() {
           metaphor_mode: false,
         }),
       });
-      window.location.href = "/dashboard";
+      setStep("done");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -283,6 +284,72 @@ export default function SignupPage() {
                 <Button onClick={handleVerify} disabled={loading || enteredCode.length < 6} size="lg">
                   {loading ? "Verifying…" : "Verify →"}
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Done: Coco's number */}
+          {step === "done" && (
+            <div className="space-y-6 text-center">
+              <div className="flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f3ee]">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M6 16l7 7L26 9" stroke="#2d6a4f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-[#1a1208]">You're all set!</h2>
+                <p className="mt-1 text-sm text-[#888]">
+                  One last thing — save Coco's number in {elderly.nickname || elderly.name || "their"}'s phone so they can call anytime.
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#fef3e0] border border-[#fde68a] px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#d97706] mb-2">Coco's phone number</p>
+                <p className="text-4xl font-bold tracking-wide text-[#1a1208]">+1 (888) 870-8838</p>
+                <p className="text-xs text-[#d97706] mt-2">This is the number {elderly.nickname || elderly.name || "they"} will call to reach Coco</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText("+18888708838");
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#e8e4de] bg-white px-5 py-2.5 text-sm font-medium text-[#1a1208] hover:bg-[#f5f4f0] transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4" stroke="#2d6a4f" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="8" height="9" rx="1.5" stroke="#6b6b6b" strokeWidth="1.5"/><path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" stroke="#6b6b6b" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    Copy number
+                  </>
+                )}
+              </button>
+
+              <div className="rounded-xl bg-white border border-[#e8e4de] px-5 py-4 text-left space-y-2">
+                <p className="text-sm font-semibold text-[#1a1208]">How to save the contact</p>
+                <ol className="text-sm text-[#6b6b6b] space-y-1 list-decimal list-inside">
+                  <li>Open the Phone app on {elderly.nickname || elderly.name || "their"}'s phone</li>
+                  <li>Tap <strong className="text-[#1a1208]">Add new contact</strong></li>
+                  <li>Name it <strong className="text-[#1a1208]">Coco</strong> and paste the number</li>
+                  <li>Save — they're ready to call anytime!</li>
+                </ol>
+              </div>
+
+              <div className="pt-2">
+                <a
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#e8733b] px-6 py-3 text-sm font-semibold text-white hover:bg-[#d4622a] transition-colors"
+                >
+                  Go to your dashboard →
+                </a>
               </div>
             </div>
           )}
