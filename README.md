@@ -109,7 +109,7 @@ components/
 
 ## Try it live! (no setup required)
 
-1. Go to <https://call-coco.vercel.app/dashboard/calls>
+1. Go to <https://call-coco.vercel.app>
 
 2. Create an account, link to a senior's phone, start calling Coco!
 
