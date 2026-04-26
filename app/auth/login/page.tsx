@@ -8,7 +8,7 @@ export default function LoginPage() {
       <div className="hidden w-[420px] shrink-0 flex-col justify-between bg-[#17120a] p-10 lg:flex">
         <div className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Coco" className="h-9 w-auto brightness-0 invert" />
+          <img src="/logo.png" alt="Coco" className="h-9 w-auto" />
         </div>
 
         <div className="space-y-6">
