@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Vision
 **Product Name:** Coco
-**Vision:** To bridge the digital divide for the elderly through intuitive, conversational AI, while providing peace of mind and real-time monitoring for their caretakers.
+**Vision:** To bridge the digital divide for the elderly through intuitive, conversational AI, while providing peace of mind and real-time  monitoring for their caretakers.
 
 **Core Value Proposition:** Coco acts as an empathetic, patient, and highly accessible voice assistant that users interact with simply by making a standard phone call. It guides elderly users step-by-step through complex digital workflows (like navigating a smartphone, using online banking, or setting up a smart TV). Concurrently, it functions as an active safety monitor, running real-time transcript analysis to detect scams, cognitive distress, or extreme frustration, immediately escalating issues to designated caretakers via SMS and live dashboard alerts.
 
