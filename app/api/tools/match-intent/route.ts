@@ -21,8 +21,8 @@ const judgeSchema = z.object({
   clarification_question: z.string().nullable().optional(),
 });
 
-const HIGH_THRESHOLD = 0.86;
-const MID_THRESHOLD = 0.68;
+const HIGH_THRESHOLD = 0.78;
+const MID_THRESHOLD = 0.55;
 
 type FlowMatch = {
   id: string;
