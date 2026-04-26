@@ -32,11 +32,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const payload = JSON.parse(rawBody);
-    const { transcript, summary, metadata } = payload;
+    const payload = JSON.parse(rawBody || "{}");
     
-    // ElevenLabs sends metadata back exactly as passed during the connection
-    const { call_log_id } = metadata || {};
+    // Check if it's the new post_call_transcription webhook format
+    const isNewSchema = payload.type === "post_call_transcription" && payload.data;
+    const data = isNewSchema ? payload.data : payload;
+
+    const transcript = data.transcript || [];
+    const summary = data.analysis?.transcript_summary || data.summary;
+    
+    // ElevenLabs passes the dynamic variables back in the client data
+    const call_log_id = 
+      data.conversation_initiation_client_data?.dynamic_variables?.call_log_id ||
+      data.metadata?.call_log_id ||
+      data.custom_data?.call_log_id;
 
     if (!call_log_id) {
       console.error("[post-call] Missing call_log_id in metadata");
