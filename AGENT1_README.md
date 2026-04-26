@@ -27,7 +27,7 @@ lib/twilio/client.ts
 This is the most critical route. It bridges the user to ElevenLabs and provides the AI with its initial context.
 1. **Identify User:** Lookup `elderly_users` by caller ID (`From`).
 2. **Create Log:** Insert `call_logs` entry (status: `in_progress`).
-3. **Fetch Immediate Memory:** Query the last 3 `call_logs` for this user. Concatenate their `summary` fields into a `recent_history` stri1ng.
+3. **Fetch Immediate Memory:** Query the last 3 `call_logs` for this user. Concatenate their `summary` fields into a `recent_his1tory` stri1ng.
 4. **Return TwiML:** Use `<Connect><Stream>` to link to ElevenLabs. 
    - **Crucial:** Pass `call_log_id`, `elderly_user_id`, `user_name`, and `recent_history` as JSON in the `<Parameter name="dynamic_variables" ... />` tag.
 
