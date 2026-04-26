@@ -33,13 +33,13 @@ const IconArrowRight = ({ size = 14 }: { size?: number }) => (
   </svg>
 );
 const IconChevLeft = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 const IconChevRight = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M7 4l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 const IconCallFill = () => (
@@ -77,7 +77,6 @@ const HowPhone = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// ── Scene label pair ──────────────────────────────────────────────────────────
 const SceneLabel = ({ label, caption }: { label: string; caption: string }) => (
   <>
     <div className="text-[13px] font-semibold text-[#9e8e7a] tracking-[.06em] uppercase">{label}</div>
@@ -85,7 +84,7 @@ const SceneLabel = ({ label, caption }: { label: string; caption: string }) => (
   </>
 );
 
-// ── Feature card data ─────────────────────────────────────────────────────────
+// ── Data ──────────────────────────────────────────────────────────────────────
 const FEATURE_CARDS = [
   {
     num: "01 / 03", iconBg: "rgba(224,116,56,.12)", icon: <IconPhone />,
@@ -114,11 +113,28 @@ const STEPS = [
   { title: "You stay informed", text: "Sarah sees an AI summary of the call, any alerts triggered, and Harold's mood trend — all in the dashboard." },
 ];
 
+const PROBLEMS = [
+  {
+    icon: "📞",
+    title: "Tech support is too complex",
+    text: "Existing solutions assume smartphone literacy. Hold menus, multi-step apps, and jargon leave seniors stranded.",
+  },
+  {
+    icon: "🎣",
+    title: "Scams are targeting the vulnerable",
+    text: "1 in 5 seniors fall victim to phone scams each year. Families have no way to intervene in real time.",
+  },
+  {
+    icon: "😔",
+    title: "Caretakers are kept in the dark",
+    text: "Families worry constantly but can't monitor every interaction. There's no visibility, no alerts, no peace of mind.",
+  },
+];
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [activeCard, setActiveCard] = useState(0);
-  const trackRef     = useRef<HTMLDivElement>(null);
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepIdxRef   = useRef(0);
 
@@ -180,44 +196,15 @@ export default function LandingPage() {
     return () => { obs.disconnect(); if (stepTimerRef.current) clearInterval(stepTimerRef.current); };
   }, []);
 
-  // Carousel drag scroll
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    let isDown = false, startX = 0, sl = 0;
-    const onDown  = (e: MouseEvent) => { isDown = true; startX = e.pageX - track.offsetLeft; sl = track.scrollLeft; track.style.cursor = "grabbing"; };
-    const onUp    = () => { isDown = false; track.style.cursor = "grab"; };
-    const onLeave = () => { isDown = false; track.style.cursor = "grab"; };
-    const onMove  = (e: MouseEvent) => { if (!isDown) return; e.preventDefault(); track.scrollLeft = sl - (e.pageX - track.offsetLeft - startX); };
-    track.addEventListener("mousedown", onDown);
-    track.addEventListener("mouseup",   onUp);
-    track.addEventListener("mouseleave", onLeave);
-    track.addEventListener("mousemove",  onMove);
-    return () => {
-      track.removeEventListener("mousedown",  onDown);
-      track.removeEventListener("mouseup",    onUp);
-      track.removeEventListener("mouseleave", onLeave);
-      track.removeEventListener("mousemove",  onMove);
-    };
-  }, []);
-
-  const scrollToCard = (rawIdx: number) => {
-    const track = trackRef.current;
-    if (!track) return;
-    const cards = track.querySelectorAll<HTMLElement>(".lp-feature-card");
-    const n = cards.length;
-    const idx = ((rawIdx % n) + n) % n;
-    setActiveCard(idx);
-    const card = cards[idx];
-    const offset = track.scrollLeft + (card.getBoundingClientRect().left - track.getBoundingClientRect().left) - 60;
-    track.scrollTo({ left: offset, behavior: "smooth" });
-  };
-
   const handleStepClick = (idx: number) => {
     if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
     stepIdxRef.current = idx;
     setActiveStep(idx);
   };
+
+  // Circular carousel: left, center, right indices
+  const leftIdx   = (activeCard + 2) % 3;
+  const rightIdx  = (activeCard + 1) % 3;
 
   return (
     <div className="bg-[#fdf9f4] text-[#1c1309] overflow-x-hidden font-[var(--font-dm-sans,DM_Sans,sans-serif)]">
@@ -324,7 +311,6 @@ export default function LandingPage() {
 
         {/* Phone mockup */}
         <div className="lp-anim-phone mt-[72px] relative inline-block">
-          {/* device */}
           <div
             className="relative overflow-hidden rounded-[36px] border border-[#ecdecb]"
             style={{
@@ -335,7 +321,6 @@ export default function LandingPage() {
           >
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[70px] h-[6px] bg-[#ecdecb] rounded-full" />
             <div className="absolute inset-3 bg-[#faf5ec] rounded-[26px] flex flex-col items-center justify-center gap-3.5 p-5">
-              {/* call status pill */}
               <div className="flex items-center gap-1.5 bg-[#fff3cc] border border-[rgba(245,168,0,.3)] rounded-[20px] py-[5px] px-3">
                 <div
                   className="w-[6px] h-[6px] bg-[#e07438] rounded-full"
@@ -348,131 +333,162 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* floating badge 1 — scam shield */}
+          {/* floating badge 1 */}
           <div
             className="absolute bg-white border border-[#ecdecb] rounded-xl px-3.5 py-2.5 whitespace-nowrap"
-            style={{
-              right: -80, top: 60,
-              boxShadow: "0 4px 20px rgba(28,19,9,.08)",
-              animation: "lp-float-badge 4s ease-in-out infinite",
-            }}
+            style={{ right: -80, top: 60, boxShadow: "0 4px 20px rgba(28,19,9,.08)", animation: "lp-float-badge 4s ease-in-out infinite" }}
           >
             <div className="text-[10.5px] text-[#9e8e7a] mb-0.5">Scam Shield</div>
             <div className="text-[13px] font-semibold text-[#1c1309]">🛡 Active</div>
           </div>
 
-          {/* floating badge 2 — caretaker notified */}
+          {/* floating badge 2 */}
           <div
             className="absolute bg-white border border-[#ecdecb] rounded-xl px-3.5 py-2.5 whitespace-nowrap"
-            style={{
-              left: -100, bottom: 80,
-              boxShadow: "0 4px 20px rgba(28,19,9,.08)",
-              animation: "lp-float-badge 4s ease-in-out infinite",
-              animationDelay: "-2s",
-            }}
+            style={{ left: -100, bottom: 80, boxShadow: "0 4px 20px rgba(28,19,9,.08)", animation: "lp-float-badge 4s ease-in-out infinite", animationDelay: "-2s" }}
           >
             <div className="text-[10.5px] text-[#9e8e7a] mb-0.5">Caretaker notified</div>
             <div className="text-[13px] font-semibold text-[#1c1309]">SMS sent to Sarah</div>
           </div>
         </div>
 
-        {/* scroll hint */}
+        {/* ── Scroll hint — fixed: spans full width so items-center truly centers ── */}
         <div
-          className="absolute bottom-9 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          className="absolute bottom-9 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none"
           style={{ animation: "lp-fade-in-up 1s 2.5s both" }}
         >
           <span className="text-[11px] text-[#9e8e7a] tracking-[.1em] uppercase">Scroll to explore</span>
           <div
-            className="w-5 h-5 border-r-[1.5px] border-b-[1.5px] border-[#ecdecb]"
+            className="w-5 h-5 border-r-[1.5px] border-b-[1.5px] border-[#9e8e7a]"
             style={{ animation: "lp-bounce-down 1.5s ease infinite" }}
           />
         </div>
       </section>
 
-      {/* ── Problem — blank, reserved for future content ── */}
-      <section id="problem" className="bg-[#fff8ee] px-[60px] py-20 min-h-[160px]" />
+      {/* ── Problem ── */}
+      <section id="problem" className="bg-[#fff8ee] px-[60px] py-[120px]">
+        <div className="max-w-[1100px] mx-auto">
+          {/* header */}
+          <div className="max-w-[560px] mb-16">
+            <div className="lp-reveal-l text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">
+              The Problem
+            </div>
+            <h2
+              className="lp-reveal-l font-bold leading-[1.08] text-[#1c1309] tracking-[-1.5px] mb-5"
+              style={{ fontSize: "clamp(36px,5vw,56px)" }}
+            >
+              Our parents deserve better<br />than being left behind.
+            </h2>
+            <p className="lp-reveal-l text-[17px] text-[#6b5e4a] leading-[1.7]">
+              Technology moves fast. The people who raised us can't always keep up. And the systems meant to help them often make things worse.
+            </p>
+          </div>
+
+          {/* problem cards */}
+          <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+            {PROBLEMS.map((p, i) => (
+              <div
+                key={i}
+                className="lp-reveal-s bg-white rounded-2xl p-8 border border-[#ecdecb]"
+                style={{ transitionDelay: `${i * 0.12}s` }}
+              >
+                <div className="text-4xl mb-5">{p.icon}</div>
+                <h3 className="text-[17px] font-bold text-[#1c1309] mb-3 tracking-[-0.3px]">{p.title}</h3>
+                <p className="text-[15px] text-[#6b5e4a] leading-[1.7]">{p.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── Solution / Features Carousel ── */}
-      <section id="solution" className="bg-[#fffcf7] overflow-hidden py-[120px]">
+      <section id="solution" className="bg-[#1c1309] overflow-hidden py-[120px]">
         {/* header */}
         <div className="text-center max-w-[640px] mx-auto mb-16 px-[60px]">
           <div className="lp-reveal text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">
             Our solution
           </div>
           <h2
-            className="lp-reveal font-bold leading-[1.08] text-[#1c1309] tracking-[-1.5px]"
+            className="lp-reveal font-bold leading-[1.08] text-white tracking-[-1.5px]"
             style={{ fontSize: "clamp(36px,5vw,56px)" }}
           >
             Everything seniors need.<br />Everything caretakers want.
           </h2>
-          <p className="lp-reveal text-[17px] text-[#6b5e4a] leading-[1.7] max-w-[560px] mx-auto mt-4">
+          <p className="lp-reveal text-[17px] text-[#9e8e7a] leading-[1.7] max-w-[560px] mx-auto mt-4">
             Coco is a voice AI your loved one can call any time — guided, protected, and monitored by you.
           </p>
         </div>
 
-        {/* track */}
-        <div>
+        {/* Centered card carousel */}
+        <div className="relative overflow-hidden" style={{ height: 480 }}>
+          {/* Left card */}
           <div
-            ref={trackRef}
-            className="lp-features-track flex gap-6 px-[60px] pb-12 overflow-x-auto snap-x snap-mandatory cursor-grab"
+            className="absolute top-1/2 transition-all duration-500 cursor-pointer"
+            style={{
+              width: 380,
+              left: "50%",
+              transform: "translate(calc(-50% - 420px), -50%) scale(0.87)",
+              opacity: 0.5,
+              zIndex: 5,
+            }}
+            onClick={() => setActiveCard(leftIdx)}
           >
-            {FEATURE_CARDS.map((card, i) => (
-              <div
-                key={i}
-                className={`lp-reveal-s lp-feature-card bg-white rounded-3xl px-9 py-10 min-w-[380px] max-w-[380px] shrink-0 snap-start relative overflow-hidden border transition-all ${
-                  activeCard === i ? "border-[rgba(245,168,0,.4)] shadow-[0_16px_48px_rgba(28,19,9,.1)]" : "border-[#ecdecb]"
-                }`}
-                style={{ transitionDelay: `${i * 0.1}s` }}
-              >
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: "linear-gradient(140deg,rgba(245,168,0,.04),transparent 60%)" }}
-                />
-                <div className="text-[11px] font-bold tracking-[.12em] uppercase text-[#9e8e7a] mb-7">{card.num}</div>
-                <div
-                  className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mb-[22px]"
-                  style={{ background: card.iconBg }}
-                >
-                  {card.icon}
-                </div>
-                <div className="text-[22px] font-bold text-[#1c1309] mb-3 tracking-[-0.4px]">{card.title}</div>
-                <div className="text-[15px] text-[#6b5e4a] leading-[1.72]">{card.text}</div>
-                <div
-                  className="inline-flex items-center gap-[5px] rounded-[20px] py-[5px] px-3 text-[11.5px] font-bold mt-5 tracking-[.03em]"
-                  style={{ background: card.tagBg, color: card.tagColor }}
-                >
-                  {card.tag}
-                </div>
-              </div>
-            ))}
+            <FeatureCardInner card={FEATURE_CARDS[leftIdx]} isActive={false} />
           </div>
 
-          {/* carousel controls */}
-          <div className="flex items-center gap-3 px-[60px] mt-2">
-            {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                onClick={() => scrollToCard(i)}
-                className={`h-2 rounded-full cursor-pointer transition-all duration-300 ${
-                  activeCard === i ? "w-6 bg-[#e07438]" : "w-2 bg-[#ecdecb]"
-                }`}
-              />
-            ))}
-            <div className="flex gap-2 ml-auto">
-              <button
-                onClick={() => scrollToCard(activeCard - 1)}
-                className="lp-carousel-btn w-10 h-10 rounded-[10px] border border-[#ecdecb] bg-white flex items-center justify-center cursor-pointer text-[#6b5e4a]"
-              >
-                <IconChevLeft />
-              </button>
-              <button
-                onClick={() => scrollToCard(activeCard + 1)}
-                className="lp-carousel-btn w-10 h-10 rounded-[10px] border border-[#ecdecb] bg-white flex items-center justify-center cursor-pointer text-[#6b5e4a]"
-              >
-                <IconChevRight />
-              </button>
-            </div>
+          {/* Center card */}
+          <div
+            className="absolute top-1/2 transition-all duration-500"
+            style={{
+              width: 380,
+              left: "50%",
+              transform: "translate(-50%, -50%) scale(1)",
+              opacity: 1,
+              zIndex: 10,
+            }}
+          >
+            <FeatureCardInner card={FEATURE_CARDS[activeCard]} isActive={true} />
           </div>
+
+          {/* Right card */}
+          <div
+            className="absolute top-1/2 transition-all duration-500 cursor-pointer"
+            style={{
+              width: 380,
+              left: "50%",
+              transform: "translate(calc(-50% + 420px), -50%) scale(0.87)",
+              opacity: 0.5,
+              zIndex: 5,
+            }}
+            onClick={() => setActiveCard(rightIdx)}
+          >
+            <FeatureCardInner card={FEATURE_CARDS[rightIdx]} isActive={false} />
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-4 mt-10">
+          <button
+            onClick={() => setActiveCard(leftIdx)}
+            className="w-10 h-10 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <IconChevLeft />
+          </button>
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              onClick={() => setActiveCard(i)}
+              className={`h-2 rounded-full cursor-pointer transition-all duration-300 ${
+                activeCard === i ? "w-6 bg-[#e07438]" : "w-2 bg-white/30"
+              }`}
+            />
+          ))}
+          <button
+            onClick={() => setActiveCard(rightIdx)}
+            className="w-10 h-10 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            <IconChevRight />
+          </button>
         </div>
       </section>
 
@@ -490,9 +506,12 @@ export default function LandingPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-[360px,1fr] gap-[60px] max-w-[1100px] mx-auto items-start">
-
-          {/* steps list */}
+        {/* Two-column layout — inline gridTemplateColumns to guarantee parsing */}
+        <div
+          className="grid gap-[60px] max-w-[1100px] mx-auto items-start"
+          style={{ gridTemplateColumns: "360px 1fr" }}
+        >
+          {/* Left: steps list */}
           <div className="flex flex-col relative">
             {STEPS.map((step, i) => (
               <div
@@ -502,11 +521,9 @@ export default function LandingPage() {
                   activeStep === i ? "bg-[#fff8ee]" : "bg-transparent"
                 }`}
               >
-                {/* connector line */}
                 {i < 3 && (
                   <div className="absolute left-[39px] top-[72px] bottom-[-24px] w-[1.5px] bg-[#ecdecb] z-0" />
                 )}
-                {/* step circle */}
                 <div
                   className={`w-[38px] h-[38px] rounded-full flex items-center justify-center text-sm font-extrabold shrink-0 relative z-[1] transition-all duration-300 ${
                     activeStep === i
@@ -516,7 +533,6 @@ export default function LandingPage() {
                 >
                   {i + 1}
                 </div>
-                {/* text */}
                 <div className="pt-0.5">
                   <div
                     className={`text-[15px] font-bold mb-1 transition-colors duration-200 ${
@@ -533,10 +549,9 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* visual panel */}
+          {/* Right: visual panel */}
           <div className="sticky top-[120px] rounded-3xl overflow-hidden border border-[#ecdecb] bg-[#fdf9f4] min-h-[460px] flex items-center justify-center">
 
-            {/* Scene 1: Dial */}
             {activeStep === 0 && (
               <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
                 <HowPhone>
@@ -564,24 +579,16 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Scene 2: Coco listens */}
             {activeStep === 1 && (
               <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
                 <HowPhone>
                   <div className="flex items-center gap-1.5 bg-[#fff3cc] border border-[rgba(245,168,0,.3)] rounded-[20px] py-[5px] px-2.5 text-[11px] font-semibold text-[#a06a00] self-start">
-                    <div
-                      className="w-[6px] h-[6px] bg-[#e07438] rounded-full"
-                      style={{ animation: "lp-pulse 1.5s infinite" }}
-                    />
+                    <div className="w-[6px] h-[6px] bg-[#e07438] rounded-full" style={{ animation: "lp-pulse 1.5s infinite" }} />
                     Call in progress
                   </div>
                   <div className="flex items-center gap-[5px] h-12">
                     {[0, .15, .3, .15, 0].map((d, i) => (
-                      <span
-                        key={i}
-                        className="block w-1 h-[6px] bg-[#e07438] rounded-[2px]"
-                        style={{ animation: "lp-wave-bar 1.4s ease-in-out infinite", animationDelay: `${d}s` }}
-                      />
+                      <span key={i} className="block w-1 h-[6px] bg-[#e07438] rounded-[2px]" style={{ animation: "lp-wave-bar 1.4s ease-in-out infinite", animationDelay: `${d}s` }} />
                     ))}
                   </div>
                   <div className="bg-[#fff3cc] border border-[rgba(245,168,0,.3)] rounded-[12px_12px_12px_2px] px-3.5 py-2.5 text-xs text-[#7a5000] max-w-[140px] text-left leading-[1.5]">
@@ -595,7 +602,6 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Scene 3: Step by step */}
             {activeStep === 2 && (
               <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
                 <HowPhone>
@@ -633,7 +639,6 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Scene 4: Dashboard */}
             {activeStep === 3 && (
               <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
                 <div className="flex flex-col gap-3 w-full max-w-[320px]">
@@ -644,8 +649,8 @@ export default function LandingPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
                     {[
-                      { label: "Duration", val: "4m 22s",   sub: "Resolved ✓",    subColor: "text-[#3d8c6a]" },
-                      { label: "Mood",     val: "😊 Happy", sub: "+2 this week",  subColor: "text-[#3d8c6a]" },
+                      { label: "Duration", val: "4m 22s",   sub: "Resolved ✓",   subColor: "text-[#3d8c6a]" },
+                      { label: "Mood",     val: "😊 Happy", sub: "+2 this week", subColor: "text-[#3d8c6a]" },
                     ].map((item, i) => (
                       <div key={i} className="bg-white border border-[#ecdecb] rounded-xl px-4 py-3.5 text-left">
                         <div className="text-[10px] font-bold uppercase tracking-[.08em] text-[#9e8e7a] mb-1.5">{item.label}</div>
@@ -719,6 +724,37 @@ export default function LandingPage() {
         <div className="text-xs text-[#9e8e7a]">© 2026 Coco AI · Built with ♥ for the ones we love</div>
       </footer>
 
+    </div>
+  );
+}
+
+// ── Feature card inner (extracted to keep carousel JSX clean) ─────────────────
+function FeatureCardInner({ card, isActive }: { card: typeof FEATURE_CARDS[number]; isActive: boolean }) {
+  return (
+    <div
+      className={`bg-white rounded-3xl px-9 py-10 relative overflow-hidden border transition-all ${
+        isActive ? "border-[rgba(245,168,0,.4)] shadow-[0_24px_60px_rgba(28,19,9,.18)]" : "border-[#ecdecb]"
+      }`}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(140deg,rgba(245,168,0,.04),transparent 60%)" }}
+      />
+      <div className="text-[11px] font-bold tracking-[.12em] uppercase text-[#9e8e7a] mb-7">{card.num}</div>
+      <div
+        className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mb-[22px]"
+        style={{ background: card.iconBg }}
+      >
+        {card.icon}
+      </div>
+      <div className="text-[22px] font-bold text-[#1c1309] mb-3 tracking-[-0.4px]">{card.title}</div>
+      <div className="text-[15px] text-[#6b5e4a] leading-[1.72]">{card.text}</div>
+      <div
+        className="inline-flex items-center gap-[5px] rounded-[20px] py-[5px] px-3 text-[11.5px] font-bold mt-5 tracking-[.03em]"
+        style={{ background: card.tagBg, color: card.tagColor }}
+      >
+        {card.tag}
+      </div>
     </div>
   );
 }
