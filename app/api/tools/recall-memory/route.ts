@@ -6,7 +6,8 @@ import { buildMemoryText } from "@/lib/gemini/intelligence-utils.mjs";
 
 const requestSchema = z.object({
   query: z.string().trim().min(1),
-  elderly_user_id: z.string().uuid(),
+  elderly_user_id: z.string().optional(),
+  call_log_id: z.string().uuid().optional(),
 });
 
 type MemoryMatch = {
@@ -21,9 +22,28 @@ type MemoryMatch = {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { query, elderly_user_id } = requestSchema.parse(await req.json());
+    const body = requestSchema.parse(await req.json());
+    const { query } = body;
 
     const supabase = await createServiceClient();
+
+    // Resolve elderly_user_id — prefer direct value, fall back to call_log_id lookup
+    let elderly_user_id = z.string().uuid().safeParse(body.elderly_user_id).success
+      ? body.elderly_user_id!
+      : null;
+
+    if (!elderly_user_id && body.call_log_id) {
+      const { data: log } = await supabase
+        .from("call_logs")
+        .select("elderly_user_id")
+        .eq("id", body.call_log_id)
+        .single();
+      elderly_user_id = log?.elderly_user_id ?? null;
+    }
+
+    if (!elderly_user_id) {
+      return NextResponse.json({ error: "Could not resolve elderly_user_id" }, { status: 400 });
+    }
 
     const embedding = await embedText(query);
 
