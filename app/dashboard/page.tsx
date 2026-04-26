@@ -1,7 +1,6 @@
 import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
 import { LiveAlertsPanel } from "@/components/dashboard/LiveAlertsPanel";
 import { ScamAlertsCard } from "@/components/dashboard/ScamAlertsCard";
-import { MoodChart } from "@/components/charts/MoodChart";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
@@ -26,19 +25,13 @@ async function getOverviewData(
 ) {
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [{ count }, { data: metricRows }, { data: alertRows }, { data: recentCalls }] =
+  const [{ count }, { data: alertRows }, { data: recentCalls }] =
     await Promise.all([
       supabase
         .from("call_logs")
         .select("id", { count: "exact", head: true })
         .in("elderly_user_id", elderlyIds)
         .gte("started_at", cutoff),
-      supabase
-        .from("mood_metrics")
-        .select("recorded_at, sentiment_score, frustration_level, confusion_level")
-        .in("elderly_user_id", elderlyIds)
-        .gte("recorded_at", cutoff)
-        .order("recorded_at", { ascending: true }),
       supabase
         .from("scam_alerts")
         .select(
@@ -61,7 +54,6 @@ async function getOverviewData(
 
   return {
     totalCalls: count ?? 0,
-    moodMetrics: metricRows ?? [],
     alerts: (alertRows ?? []).map((alert) => {
       const elderlyUser = Array.isArray(alert.elderly_user)
         ? alert.elderly_user[0]
@@ -94,12 +86,6 @@ export default async function DashboardPage() {
   const elderlyIds = (elderlyUsers ?? []).map((u) => u.id);
 
   let totalCalls = 0;
-  let moodMetrics: Array<{
-    recorded_at: string;
-    sentiment_score: number;
-    frustration_level: number;
-    confusion_level: number;
-  }> = [];
   let alerts: Array<{
     id: string;
     detected_keywords: string[];
@@ -119,15 +105,9 @@ export default async function DashboardPage() {
   if (elderlyIds.length > 0) {
     const data = await getOverviewData(supabase, elderlyIds);
     totalCalls = data.totalCalls;
-    moodMetrics = data.moodMetrics;
     alerts = data.alerts;
     recentCalls = data.recentCalls as typeof recentCalls;
   }
-
-  const averageSentiment =
-    moodMetrics.length > 0
-      ? moodMetrics.reduce((sum, r) => sum + r.sentiment_score, 0) / moodMetrics.length
-      : null;
 
   const caretakerFirstName = caretaker.name?.split(" ")[0] ?? "there";
   const primaryElderlyName =
@@ -162,21 +142,11 @@ export default async function DashboardPage() {
           <p className="mt-1 text-xs text-[#aaa]">Active</p>
         </Card>
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[#888]">Mood Score</p>
-          <p className="mt-3 text-3xl font-bold text-[#1a1208]">
-            {averageSentiment !== null ? averageSentiment.toFixed(2) : "—"}
-          </p>
-          <p className="mt-1 text-xs text-[#aaa]">Avg sentiment</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-[#888]">Protected Users</p>
+          <p className="mt-3 text-3xl font-bold text-[#1a1208]">{elderlyIds.length}</p>
+          <p className="mt-1 text-xs text-[#aaa]">Currently linked</p>
         </Card>
       </div>
-
-      {moodMetrics.length > 0 && (
-        <Card className="p-6">
-          <p className="text-base font-semibold text-[#1a1208] mb-1">Mood over time</p>
-          <p className="text-sm text-[#888] mb-4">Sentiment, frustration, and confusion — last 30 days</p>
-          <MoodChart data={moodMetrics} />
-        </Card>
-      )}
 
       <ScamAlertsCard />
 

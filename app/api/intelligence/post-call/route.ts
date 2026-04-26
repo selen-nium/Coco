@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { embedText, toVectorLiteral } from "@/lib/gemini/client";
 import { normalizeTranscriptEntry } from "@/lib/gemini/intelligence-utils.mjs";
+import {
+  analyzeTaskConfidence,
+  extractTaskLabel,
+  type TranscriptEntry,
+} from "@/lib/intelligence/call-analysis";
 
 /**
  * POST /api/intelligence/post-call
@@ -63,7 +68,7 @@ export async function POST(req: NextRequest) {
       console.log("[post-call] Full analysis object:", JSON.stringify(data.analysis));
     }
 
-    const transcript = data.transcript || [];
+    const transcript = (data.transcript || []) as TranscriptEntry[];
     const summary = data.analysis?.transcript_summary || data.summary;
     
     // 1. Extract sentiment from Data Collection results
@@ -148,6 +153,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (Array.isArray(transcript) && transcript.length > 0) {
+      const taskLabel = await extractTaskLabel(transcript);
+      const confidenceAnalysis = analyzeTaskConfidence(transcript);
+
       const transcriptEntries = transcript.map((entry: any) => {
         const message = normalizeTranscriptEntry(entry);
         const isUser = entry.role === "user" || entry.role === "user_proxy";
@@ -171,6 +179,18 @@ export async function POST(req: NextRequest) {
 
       if (insertError) {
         console.error("[post-call] Failed to insert transcript:", insertError);
+      }
+
+      const { error: taskUpdateError } = await supabase
+        .from("call_logs")
+        .update({
+          task_label: taskLabel,
+          task_confidence: confidenceAnalysis.confidence,
+        })
+        .eq("id", call_log_id);
+
+      if (taskUpdateError) {
+        console.error("[post-call] Failed to update task analysis:", taskUpdateError);
       }
     }
 

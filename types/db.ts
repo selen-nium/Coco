@@ -76,6 +76,8 @@ export interface CallLog {
   twilio_call_sid: string;
   flow_id: string | null;
   intent_text: string | null;
+  task_label: string | null;
+  task_confidence: "High" | "Medium" | "Low" | null;
   started_at: string;
   ended_at: string | null;
   duration_seconds: number | null;

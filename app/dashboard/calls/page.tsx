@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 
 function formatDuration(value: number | null) {
   if (!value) return "—";
@@ -60,20 +59,6 @@ export default async function CallsPage({
     ? await query.range(from, to)
     : { data: [], count: 0 };
 
-  const callIds = (calls ?? []).map((c) => c.id);
-  const { data: interventionRows } =
-    callIds.length > 0
-      ? await supabase
-          .from("intervention_logs")
-          .select("call_log_id")
-          .in("call_log_id", callIds)
-      : { data: [] };
-
-  const interventionCounts = new Map<string, number>();
-  for (const row of interventionRows ?? []) {
-    interventionCounts.set(row.call_log_id, (interventionCounts.get(row.call_log_id) ?? 0) + 1);
-  }
-
   const normalizedCalls = (calls ?? []).map((call) => ({
     ...call,
     elderly_user: Array.isArray(call.elderly_user) ? call.elderly_user[0] : call.elderly_user,
@@ -114,7 +99,14 @@ export default async function CallsPage({
         <table className="w-full text-sm">
           <thead className="border-b border-[#e8e4de] bg-[#f5f4f0]">
             <tr>
-              {["Date & Time", "Duration", "App / Intent", "Status", "Loops"].map((h) => (
+              {[
+                "Date & Time",
+                "Duration",
+                "Sentiment",
+                "Task Label",
+                "Conversation Summary",
+                "Confidence",
+              ].map((h) => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#888]">
                   {h}
                 </th>
@@ -124,7 +116,7 @@ export default async function CallsPage({
           <tbody className="divide-y divide-[#e8e4de]">
             {normalizedCalls.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-[#888] text-sm">
+                <td colSpan={6} className="px-5 py-10 text-center text-[#888] text-sm">
                   No calls found.
                 </td>
               </tr>
@@ -148,25 +140,16 @@ export default async function CallsPage({
                   </td>
                   <td className="px-5 py-3.5 text-[#666]">{formatDuration(call.duration_seconds)}</td>
                   <td className="px-5 py-3.5 text-[#666]">
-                    {call.flow?.app ?? call.intent_text ?? "—"}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <Badge
-                      variant={
-                        call.status === "completed"
-                          ? "green"
-                          : call.status === "scam_blocked"
-                          ? "red"
-                          : call.status === "three_loop_triggered"
-                          ? "amber"
-                          : "gray"
-                      }
-                    >
-                      {call.status ?? "unknown"}
-                    </Badge>
+                    {call.intent_text ?? "—"}
                   </td>
                   <td className="px-5 py-3.5 text-[#666]">
-                    {interventionCounts.get(call.id) ?? 0}
+                    {call.task_label ?? "Task pending"}
+                  </td>
+                  <td className="max-w-md px-5 py-3.5 text-[#666]">
+                    {call.summary ?? "Summary pending"}
+                  </td>
+                  <td className="px-5 py-3.5 text-[#666]">
+                    {call.task_confidence ?? "Pending"}
                   </td>
                 </tr>
               ))
