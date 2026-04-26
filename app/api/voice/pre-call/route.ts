@@ -73,11 +73,12 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
       call_log_id: callLog.id,
       metaphor_mode: agentConfig.metaphor_mode ? "true" : "false",
       caretaker_phone: caretakerPhone,
-      recent_history: recentHistory
+      recent_history: recentHistory,
+      phone_model: elderlyUser.phone_model || "Unknown"
     },
     overrides: {
       first_message: `Hi ${elderlyUser.name}!`,
-      system_prompt: `You are Coco. You are talking to ${elderlyUser.name}. Their recent history is: ${recentHistory}`
+      system_prompt: `You are Coco. You are talking to ${elderlyUser.name}. They are using a ${elderlyUser.phone_model || "standard phone"}. Their recent history is: ${recentHistory}`
     }
   });
 }
