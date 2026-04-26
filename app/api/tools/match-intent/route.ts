@@ -36,6 +36,8 @@ type FlowMatch = {
 export async function POST(req: NextRequest) {
   try {
     const { query, elderly_user_id } = requestSchema.parse(await req.json());
+    console.log("[match-intent] Query:", query, "User:", elderly_user_id);
+    
     const supabase = await createServiceClient();
 
     const { data: elderlyUser, error: elderlyError } = await supabase
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (elderlyError || !elderlyUser) {
+      console.error("[match-intent] User not found:", elderly_user_id);
       return NextResponse.json({ error: "Elderly user not found" }, { status: 404 });
     }
 
@@ -56,10 +59,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (matchError) {
+      console.error("[match-intent] RPC error:", matchError);
       throw matchError;
     }
 
     const rawMatches = (rpcMatches ?? []) as FlowMatch[];
+    console.log(`[match-intent] RPC found ${rawMatches.length} raw matches`);
+
     const flowIds = rawMatches.map((match) => match.id);
     const { data: flowRows, error: flowError } = flowIds.length
       ? await supabase
@@ -69,6 +75,7 @@ export async function POST(req: NextRequest) {
       : { data: [], error: null };
 
     if (flowError) {
+      console.error("[match-intent] Flow lookup error:", flowError);
       throw flowError;
     }
 
@@ -81,6 +88,8 @@ export async function POST(req: NextRequest) {
       ownership,
       elderlyUser.caretaker_id
     );
+
+    console.log(`[match-intent] ${matches.length} accessible matches after filtering`);
 
     if (matches.length === 0) {
       return NextResponse.json({
@@ -97,6 +106,8 @@ export async function POST(req: NextRequest) {
       HIGH_THRESHOLD,
       MID_THRESHOLD
     );
+
+    console.log(`[match-intent] Best match: ${best.name} (${best.similarity.toFixed(4)}) Band: ${similarityBand}`);
 
     if (similarityBand === "high") {
       return NextResponse.json({
@@ -116,6 +127,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    console.log("[match-intent] Invoking LLM judge for mid-band match");
     const rawJudge = await generateText(
       buildIntentJudgePrompt({
         query,
@@ -129,6 +141,7 @@ export async function POST(req: NextRequest) {
     );
 
     const judged = judgeSchema.parse(extractJsonBlock(rawJudge));
+    console.log(`[match-intent] LLM Judge result: matched=${judged.matched}, intent_id=${judged.intent_id}`);
 
     return NextResponse.json({
       matched: judged.matched,
@@ -138,7 +151,7 @@ export async function POST(req: NextRequest) {
       clarification_question: judged.clarification_question ?? undefined,
     });
   } catch (error) {
-    console.error("[tools/match-intent]", error);
+    console.error("[tools/match-intent] Error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }

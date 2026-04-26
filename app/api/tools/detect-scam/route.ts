@@ -23,12 +23,17 @@ export async function POST(req: NextRequest) {
     const { transcript_chunk, call_log_id, elderly_user_id } = requestSchema.parse(
       await req.json()
     );
+    console.log("[detect-scam] Analyzing chunk for call:", call_log_id);
+    
     const supabase = await createServiceClient();
 
     const raw = await generateText(buildScamDetectionPrompt(transcript_chunk));
     const result = responseSchema.parse(extractJsonBlock(raw));
 
     if (result.scam_detected) {
+      console.log(`[detect-scam] Scam detected! Confidence: ${result.confidence} Severity: ${result.severity}`);
+      console.log(`[detect-scam] Keywords: ${result.keywords.join(", ")}`);
+      
       const { data: existing } = await supabase
         .from("scam_alerts")
         .select("id, detected_keywords, severity")
@@ -60,11 +65,13 @@ export async function POST(req: NextRequest) {
           status: "active",
         });
       }
+    } else {
+      console.log("[detect-scam] No scam detected in this chunk.");
     }
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[tools/detect-scam]", error);
+    console.error("[tools/detect-scam] Error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }

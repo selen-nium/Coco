@@ -46,11 +46,12 @@ export async function POST(req: NextRequest) {
     }
 
     const embedding = await embedText(query);
+    console.log("[recall-memory] Searching memory for query:", query, "user:", elderly_user_id);
 
     const { data: matches, error } = await supabase.rpc("match_memory", {
       query_embedding: toVectorLiteral(embedding),
       elderly_id: elderly_user_id,
-      match_threshold: 0.7,
+      match_threshold: 0.5, // Lowered threshold for better retrieval
       match_count: 5,
     });
 
@@ -60,22 +61,25 @@ export async function POST(req: NextRequest) {
     }
 
     if (!matches || matches.length === 0) {
+      console.log("[recall-memory] No matches found for query:", query);
       return NextResponse.json({
         success: true,
         memory: "I searched the past conversations but couldn't find any specific information about that.",
       });
     }
 
-    const snippets = (matches as MemoryMatch[]).map((match) => ({
-      text: match.text,
-      timestamp: match.timestamp,
-      similarity: match.similarity,
-    }));
+    console.log(`[recall-memory] Found ${matches.length} matches for user:`, elderly_user_id);
+    
+    const snippets = (matches as MemoryMatch[]).map((match) => {
+      console.log(`[recall-memory] Match: "${match.text.substring(0, 50)}..." Similarity: ${match.similarity.toFixed(4)}`);
+      return {
+        text: match.text,
+        timestamp: match.timestamp,
+        similarity: match.similarity,
+      };
+    });
 
     const memory = buildMemoryText(snippets);
-
-    console.log("[recall-memory] Found memory for user:", elderly_user_id);
-
     return NextResponse.json({ success: true, memory, snippets });
   } catch (error) {
     console.error("[recall-memory] Error:", error);

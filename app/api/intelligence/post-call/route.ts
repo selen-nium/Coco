@@ -162,6 +162,9 @@ export async function POST(req: NextRequest) {
       );
 
       const filteredEntries = transcriptEntries.filter((entry) => entry.text.trim().length > 0);
+      const embeddingCount = filteredEntries.filter(e => e.embedding).length;
+
+      console.log(`[post-call] Saving ${filteredEntries.length} transcript entries (${embeddingCount} with embeddings) for call:`, call_log_id);
 
       const { error: insertError } = await supabase
         .from("call_transcripts")
