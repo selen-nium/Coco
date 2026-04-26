@@ -65,6 +65,9 @@ export async function POST(req: NextRequest) {
 
     const rawMatches = (rpcMatches ?? []) as FlowMatch[];
     console.log(`[match-intent] RPC found ${rawMatches.length} raw matches`);
+    rawMatches.forEach((m, i) => {
+      console.log(`  [Match ${i + 1}] Similarity: ${m.similarity.toFixed(4)} | Name: ${m.name} | App: ${m.app}`);
+    });
 
     const flowIds = rawMatches.map((match) => match.id);
     const { data: flowRows, error: flowError } = flowIds.length
