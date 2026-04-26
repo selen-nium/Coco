@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateTwilioSignature } from "@/lib/twilio/client";
 import { ELEVENLABS_AGENT_ID } from "@/lib/elevenlabs/client";
 import { createSession } from "@/lib/state/call-session";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { InboundCallPayload } from "@/types/api";
 
 function escapeXml(unsafe: string) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const { From, CallSid } = payload;
+  const { From, CallSid } = params;
   const supabase = await createServiceClient();
 
   const { data: elderlyUser, error: userError } = await supabase
