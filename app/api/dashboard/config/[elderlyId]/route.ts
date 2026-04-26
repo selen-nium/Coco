@@ -75,11 +75,21 @@ export async function PATCH(
       updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
-      .from("agent_configs")
-      .upsert(payload, { onConflict: "elderly_user_id" })
-      .select("*")
-      .single();
+    let data, error;
+    if (existingConfig) {
+      ({ data, error } = await supabase
+        .from("agent_configs")
+        .update(payload)
+        .eq("id", existingConfig.id)
+        .select("*")
+        .single());
+    } else {
+      ({ data, error } = await supabase
+        .from("agent_configs")
+        .insert(payload)
+        .select("*")
+        .single());
+    }
 
     if (error) {
       throw error;
