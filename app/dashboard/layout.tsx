@@ -1,6 +1,7 @@
 import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
 import { NavLink } from "@/components/dashboard/NavLink";
 import { SignOutButton } from "@/components/dashboard/SignOutButton";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -8,6 +9,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   try {
     auth = await requireAuthenticatedCaretaker();
   } catch {
+    // Sign out to clear any stale session cookie so the middleware
+    // doesn't redirect /auth/login back to /dashboard on next visit.
+    const supabase = await createClient();
+    await supabase.auth.signOut();
     redirect("/auth/login");
   }
   const { supabase, caretaker } = auth;
