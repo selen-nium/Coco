@@ -1,6 +1,6 @@
 # Coco — AI Phone Companion for Elderly Users
 
-> Built at **UWB Hacks 2026** by Selen
+> Built at **UWB Hacks 2026**
 
 Coco is a voice-first AI companion that lets elderly users get help with their digital lives by simply making a phone call — no app, no screen, no learning curve. Caretakers get a real-time dashboard with alerts, call history, and full personalisation controls.
 
@@ -113,4 +113,4 @@ components/
 
 ## Team
 
-Built solo by **Selen** at UWB Hacks 2026.
+Build by Justin, Sri, An Xian, Selen.
