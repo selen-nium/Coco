@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { updateSession } from "@/lib/state/call-session";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest) {
       console.error("[tools/escalate] Supabase error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    updateSession(call_sid, { status: "escalated" });
 
     return NextResponse.json({ success: true, message: "Call successfully escalated." });
   } catch (err) {

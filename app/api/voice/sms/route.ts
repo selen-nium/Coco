@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { validateTwilioSignature } from "@/lib/twilio/client";
 
 // POST /api/voice/sms
 export async function POST(req: NextRequest) {
+  const url = req.url;
+  const signature = req.headers.get("x-twilio-signature") || "";
   const body = await req.formData();
-  const from = body.get("From") as string;
-  const text = (body.get("Body") as string)?.trim();
+  const params = Object.fromEntries(body) as Record<string, string>;
+
+  if (!validateTwilioSignature(signature, url, params)) {
+    console.error("[voice/sms] Invalid Twilio signature");
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  const from = params.From;
+  const text = params.Body?.trim();
 
   console.log("[voice/sms] from:", from, "body:", text);
 
@@ -35,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Compare Body against verification_code
-  if (text === elderlyUser.verification_code) {
+  if (text?.toLowerCase() === elderlyUser.verification_code?.trim().toLowerCase()) {
     // 3. Match found -> update verified = true
     const { error: updateError } = await supabase
       .from("elderly_users")

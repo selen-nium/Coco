@@ -1,31 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { deleteSession, getSession } from "@/lib/state/call-session";
+import { validateTwilioSignature } from "@/lib/twilio/client";
 import type { CallStatusPayload } from "@/types/api";
 
 // POST /api/voice/status
 // Webhook called by Twilio when the physical phone line disconnects.
 export async function POST(req: NextRequest) {
   try {
+    const url = req.url;
+    const signature = req.headers.get("x-twilio-signature") || "";
     const body = await req.formData();
-    const payload = Object.fromEntries(body) as unknown as CallStatusPayload;
+    const params = Object.fromEntries(body) as Record<string, string>;
+
+    if (!validateTwilioSignature(signature, url, params)) {
+      console.error("[voice/status] Invalid Twilio signature");
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    const payload = params as unknown as CallStatusPayload;
     const { CallSid, CallStatus, CallDuration } = payload;
 
     const supabase = await createServiceClient();
     const session = getSession(CallSid);
 
-    // 1. Map Twilio status to our DB status
     let dbStatus: "completed" | "dropped" | "escalated" = "completed";
     if (CallStatus !== "completed") {
       dbStatus = "dropped";
     }
-    
-    // Preserve escalated status if it was set during the call
     if (session?.status === "escalated") {
       dbStatus = "escalated";
     }
 
-    // 2. Update call_log with duration and final status
     const { error: updateError } = await supabase
       .from("call_logs")
       .update({
@@ -39,7 +45,6 @@ export async function POST(req: NextRequest) {
       console.error("[voice/status] Failed to update call log:", updateError);
     }
 
-    // 3. Clean up the in-memory session (if using one)
     if (session) {
       deleteSession(CallSid);
     }
