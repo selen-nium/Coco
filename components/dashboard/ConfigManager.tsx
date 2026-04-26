@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Switch } from "@/components/ui/Switch";
 
 type ElderlyUser = {
   id: string;
@@ -42,11 +41,8 @@ export function ConfigManager({
 }) {
   const router = useRouter();
   const [config, setConfig] = useState<Config | null>(initialConfig);
-  const [testText, setTestText] = useState("Hi there! Let me walk you through that one step at a time.");
   const [status, setStatus] = useState<{ text: string; ok: boolean } | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
 
   const selectClass = "w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-2.5 text-sm text-[#1a1208] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition";
 
@@ -67,28 +63,6 @@ export function ConfigManager({
       setStatus({ text: payload.error ?? "Unable to save configuration.", ok: false });
     }
     setSaving(false);
-  }
-
-  async function testVoice() {
-    if (!config || !selectedElderlyId) return;
-    setTesting(true);
-    setStatus(null);
-    const res = await fetch("/api/dashboard/test-voice", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ elderly_user_id: selectedElderlyId, text: testText, config }),
-    });
-    if (!res.ok) {
-      const payload = await res.json();
-      setStatus({ text: payload.error ?? "Voice test failed.", ok: false });
-      setTesting(false);
-      return;
-    }
-    const blob = await res.blob();
-    const nextUrl = URL.createObjectURL(blob);
-    setAudioUrl((cur) => { if (cur) URL.revokeObjectURL(cur); return nextUrl; });
-    setStatus({ text: "Voice sample ready.", ok: true });
-    setTesting(false);
   }
 
   return (
@@ -142,15 +116,15 @@ export function ConfigManager({
           <div className="flex items-center justify-between gap-4 mb-6">
             <div>
               <h2 className="text-base font-semibold text-[#1a1208]">Agent configuration</h2>
-              <p className="mt-0.5 text-sm text-[#888]">Tune voice, pacing, and teaching style.</p>
+              <p className="mt-0.5 text-sm text-[#888]">Choose a voice for Coco. Coco changes speed dynamically based on the level of the user.</p>
             </div>
             <Button onClick={() => void saveConfig()} disabled={saving}>
               {saving ? "Saving…" : "Save"}
             </Button>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
+          <div className="grid gap-6">
+            <div className="flex flex-col gap-1.5 max-w-md">
               <label className="text-sm font-medium text-[#1a1208]">Voice</label>
               <select
                 value={config.elevenlabs_voice_id}
@@ -162,82 +136,6 @@ export function ConfigManager({
                 ))}
               </select>
             </div>
-
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#1a1208]">Speaking speed</label>
-                <span className="text-sm font-medium text-[#e8733b]">{config.tts_speed.toFixed(1)}x</span>
-              </div>
-              <input
-                type="range" min="0.5" max="1.5" step="0.1"
-                value={config.tts_speed}
-                onChange={(e) => setConfig({ ...config, tts_speed: Number(e.target.value) })}
-                className="w-full accent-[#e8733b]"
-              />
-              <div className="flex justify-between">
-                <span className="text-xs text-[#888]">Slower</span>
-                <span className="text-xs text-[#888]">Faster</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-[#1a1208]">Repetition level</label>
-                <span className="text-sm font-medium text-[#e8733b]">{config.repetition_level}</span>
-              </div>
-              <input
-                type="range" min="1" max="5" step="1"
-                value={config.repetition_level}
-                onChange={(e) => setConfig({ ...config, repetition_level: Number(e.target.value) })}
-                className="w-full accent-[#e8733b]"
-              />
-              <div className="flex justify-between">
-                <span className="text-xs text-[#888]">Less repetition</span>
-                <span className="text-xs text-[#888]">More repetition</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl border border-[#e8e4de] px-4 py-4">
-              <div>
-                <p className="text-sm font-semibold text-[#1a1208]">Metaphor-Teaching Mode</p>
-                <p className="text-xs text-[#888] mt-0.5">"Think of this like your TV remote…"</p>
-              </div>
-              <Switch
-                checked={config.metaphor_mode}
-                onCheckedChange={(checked) => setConfig({ ...config, metaphor_mode: checked })}
-              />
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl border border-[#e8e4de] px-4 py-4">
-              <div>
-                <p className="text-sm font-semibold text-[#1a1208]">Allow sensitive flows</p>
-                <p className="text-xs text-[#888] mt-0.5">Banking, medical, and legal guidance.</p>
-              </div>
-              <Switch
-                checked={config.allow_sensitive_flows}
-                onCheckedChange={(checked) => setConfig({ ...config, allow_sensitive_flows: checked })}
-              />
-            </div>
-          </div>
-
-          {/* Voice test */}
-          <div className="mt-6 rounded-xl bg-[#f5f4f0] p-4 space-y-3">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[#1a1208]">Test agent voice</p>
-                <p className="text-xs text-[#888] mt-0.5">Preview how Coco will sound with your settings.</p>
-              </div>
-              <Button variant="outline" type="button" onClick={() => void testVoice()} disabled={testing}>
-                {testing ? "Generating…" : "Play sample"}
-              </Button>
-            </div>
-            <textarea
-              value={testText}
-              onChange={(e) => setTestText(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl border border-[#e8e4de] bg-white px-4 py-3 text-sm text-[#1a1208] placeholder:text-[#bbb] outline-none focus:border-[#e8733b] focus:ring-2 focus:ring-[#e8733b]/20 transition resize-none"
-            />
-            {audioUrl && <audio controls src={audioUrl} className="w-full" />}
           </div>
         </Card>
       )}

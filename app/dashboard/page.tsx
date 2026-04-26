@@ -1,6 +1,5 @@
 import { requireAuthenticatedCaretaker } from "@/app/api/dashboard/_lib/auth";
 import { LiveAlertsPanel } from "@/components/dashboard/LiveAlertsPanel";
-import { ScamAlertsCard } from "@/components/dashboard/ScamAlertsCard";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
@@ -147,8 +146,6 @@ export default async function DashboardPage() {
           <p className="mt-1 text-xs text-[#aaa]">Currently linked</p>
         </Card>
       </div>
-
-      <ScamAlertsCard />
 
       <div>
         <div className="flex items-center justify-between mb-4">

@@ -9,23 +9,13 @@ function formatDuration(value: number | null) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-type FilterTab = "all" | "completed" | "scam_blocked" | "three_loop";
-
-const TABS: { id: FilterTab; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "completed", label: "Completed" },
-  { id: "scam_blocked", label: "Scam Blocked" },
-  { id: "three_loop", label: "3-Loop Triggered" },
-];
-
 export default async function CallsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; tab?: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
-  const { page: pageParam, tab: tabParam } = await searchParams;
+  const { page: pageParam } = await searchParams;
   const page = Math.max(Number(pageParam ?? "1") || 1, 1);
-  const activeTab = (TABS.find((t) => t.id === tabParam)?.id ?? "all") as FilterTab;
   const limit = 20;
   const from = (page - 1) * limit;
   const to = from + limit - 1;
@@ -38,7 +28,7 @@ export default async function CallsPage({
 
   const elderlyIds = (elderlyUsers ?? []).map((u) => u.id);
 
-  let query =
+  const query =
     elderlyIds.length > 0
       ? supabase
           .from("call_logs")
@@ -50,10 +40,6 @@ export default async function CallsPage({
           .in("elderly_user_id", elderlyIds)
           .order("started_at", { ascending: false })
       : null;
-
-  if (query && activeTab === "completed") query = query.eq("status", "completed");
-  if (query && activeTab === "scam_blocked") query = query.eq("status", "scam_blocked");
-  if (query && activeTab === "three_loop") query = query.eq("three_loop_triggered", true);
 
   const { data: calls, count } = query
     ? await query.range(from, to)
@@ -67,32 +53,11 @@ export default async function CallsPage({
 
   const totalPages = Math.max(Math.ceil((count ?? 0) / limit), 1);
 
-  function tabHref(id: FilterTab) {
-    return `/dashboard/calls?tab=${id}&page=1`;
-  }
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-[#1a1208]">Call History</h1>
         <p className="mt-1 text-sm text-[#888]">All calls routed through Coco for your linked users.</p>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-1 rounded-xl bg-[#e8e4de]/40 p-1 w-fit">
-        {TABS.map((tab) => (
-          <Link
-            key={tab.id}
-            href={tabHref(tab.id)}
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
-              activeTab === tab.id
-                ? "bg-white text-[#1a1208] shadow-sm"
-                : "text-[#888] hover:text-[#1a1208]"
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
       </div>
 
       <Card className="overflow-hidden">
@@ -161,7 +126,7 @@ export default async function CallsPage({
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <Link
-          href={`/dashboard/calls?tab=${activeTab}&page=${Math.max(page - 1, 1)}`}
+          href={`/dashboard/calls?page=${Math.max(page - 1, 1)}`}
           className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
             page === 1
               ? "pointer-events-none border-transparent bg-[#e8e4de] text-[#bbb]"
@@ -174,7 +139,7 @@ export default async function CallsPage({
           Page {page} of {totalPages}
         </p>
         <Link
-          href={`/dashboard/calls?tab=${activeTab}&page=${Math.min(page + 1, totalPages)}`}
+          href={`/dashboard/calls?page=${Math.min(page + 1, totalPages)}`}
           className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
             page >= totalPages
               ? "pointer-events-none border-transparent bg-[#e8e4de] text-[#bbb]"

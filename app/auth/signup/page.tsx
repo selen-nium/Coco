@@ -172,8 +172,9 @@ export default function SignupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           elevenlabs_voice_id: voiceId,
-          tts_speed: agent.speed,
-          metaphor_mode: agent.metaphor,
+          // We keep defaults for other fields
+          tts_speed: 1.0,
+          metaphor_mode: false,
         }),
       });
       window.location.href = "/dashboard";
@@ -222,7 +223,7 @@ export default function SignupPage() {
               </div>
               <Input label="Email address" type="email" placeholder="sarah@gmail.com" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} />
               <PhoneInput label="Your mobile number" hint="Coco sends you urgent scam alerts here via SMS" value={profile.phone} onChange={v => setProfile(p => ({ ...p, phone: v }))} />
-              <Input label="Password" type="password" placeholder="Create a strong password" value={profile.password} onChange={e => setProfile(p => ({ ...p, password: e.target.value }))} />
+              <Input label="Password" type="password" placeholder="Create a strong password" value={profile.password} onChange={e => setProfile(p => ({ ...p, email: profile.email, password: e.target.value }))} />
               <div className="flex justify-end pt-2">
                 <Button onClick={handleStep1} disabled={loading || !profile.firstName || !profile.email || !profile.password} size="lg">
                   {loading ? "Creating…" : "Continue →"}
@@ -295,7 +296,7 @@ export default function SignupPage() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-[#1a1208]">Configure the agent</h2>
-                <p className="mt-1 text-sm text-[#888]">Set Coco's voice and personality for {elderly.name || "your loved one"}.</p>
+                <p className="mt-1 text-sm text-[#888]">Choose a voice for Coco. Coco changes speed dynamically based on the level of the user.</p>
               </div>
 
               <div>
@@ -318,33 +319,6 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-[#1a1208]">Speaking speed</p>
-                  <span className="text-sm text-[#e8733b] font-medium">
-                    {agent.speed < 0.8 ? "Slow" : agent.speed < 1.1 ? "Moderate" : "Fast"}
-                  </span>
-                </div>
-                <input type="range" min="0.5" max="1.5" step="0.1" value={agent.speed}
-                  onChange={e => setAgent(a => ({ ...a, speed: parseFloat(e.target.value) }))}
-                  className="w-full accent-[#e8733b]" />
-                <div className="flex justify-between mt-1">
-                  <span className="text-xs text-[#888]">Slower</span>
-                  <span className="text-xs text-[#888]">Faster</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl bg-[#f5f4f0] px-4 py-4">
-                <div>
-                  <p className="text-sm font-semibold text-[#1a1208]">Metaphor-Teaching Mode</p>
-                  <p className="text-xs text-[#888]">"Think of the home screen like your desk…"</p>
-                </div>
-                <Switch
-                  checked={agent.metaphor}
-                  onCheckedChange={(checked) => setAgent(a => ({ ...a, metaphor: checked }))}
-                />
-              </div>
-
               <div className="flex justify-between pt-2">
                 <Button variant="ghost" onClick={() => setStep(2)}>← Back</Button>
                 <Button onClick={handleStep3} disabled={loading} size="lg">
@@ -353,6 +327,11 @@ export default function SignupPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
         </div>
       </div>
     </div>
