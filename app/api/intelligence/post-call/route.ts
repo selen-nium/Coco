@@ -66,11 +66,17 @@ export async function POST(req: NextRequest) {
     const transcript = data.transcript || [];
     const summary = data.analysis?.transcript_summary || data.summary;
     
-    // 1. Extract sentiment from Data Collection results array
-    const dataCollection = data.analysis?.data_collection_results || [];
-    const sentimentResult = dataCollection.find(
-      (item: any) => item.data_collection_id === "user_sentiment_at_end"
-    );
+    // 1. Extract sentiment from Data Collection results
+    const dataCollection = data.analysis?.data_collection_results;
+    let sentimentResult = null;
+    
+    if (Array.isArray(dataCollection)) {
+      sentimentResult = dataCollection.find(
+        (item: any) => item.data_collection_id === "user_sentiment_at_end"
+      );
+    } else if (dataCollection && typeof dataCollection === "object") {
+      sentimentResult = (dataCollection as any)["user_sentiment_at_end"];
+    }
     
     // 2. Fallback chain for sentiment
     const sentiment = 
