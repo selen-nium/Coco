@@ -62,56 +62,62 @@ const WaveBars = ({ delays }: { delays: number[] }) => (
 );
 
 // ── Phone frame for How It Works scenes ──────────────────────────────────────
-const HowPhone = ({ children }: { children: React.ReactNode }) => (
-  <div
-    className="relative flex flex-col items-center justify-start overflow-hidden gap-3 rounded-[28px] border border-[#ecdecb]"
-    style={{
-      width: 180, height: 320,
-      background: "linear-gradient(160deg,#fffcf7,#fdf3e3)",
-      padding: "40px 18px 18px",
-      boxShadow: "0 20px 60px rgba(28,19,9,.1)",
-    }}
-  >
-    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[50px] h-[5px] bg-[#ecdecb] rounded-full" />
-    {children}
-  </div>
-);
+// const HowPhone = ({ children }: { children: React.ReactNode }) => (
+//   <div
+//     className="relative flex flex-col items-center justify-start overflow-hidden gap-3 rounded-[28px] border border-[#ecdecb]"
+//     style={{
+//       width: 180, height: 320,
+//       background: "linear-gradient(160deg,#fffcf7,#fdf3e3)",
+//       padding: "40px 18px 18px",
+//       boxShadow: "0 20px 60px rgba(28,19,9,.1)",
+//     }}
+//   >
+//     <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[50px] h-[5px] bg-[#ecdecb] rounded-full" />
+//     {children}
+//   </div>
+// );
 
-const SceneLabel = ({ label, caption }: { label: string; caption: string }) => (
-  <>
-    <div className="text-[13px] font-semibold text-[#9e8e7a] tracking-[.06em] uppercase">{label}</div>
-    <div className="text-base text-[#6b5e4a] leading-[1.6] max-w-[360px] text-center">{caption}</div>
-  </>
-);
+// const SceneLabel = ({ label, caption }: { label: string; caption: string }) => (
+//   <>
+//     <div className="text-[13px] font-semibold text-[#9e8e7a] tracking-[.06em] uppercase">{label}</div>
+//     <div className="text-base text-[#6b5e4a] leading-[1.6] max-w-[360px] text-center">{caption}</div>
+//   </>
+// );
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const FEATURE_CARDS = [
   {
-    num: "01 / 03", iconBg: "rgba(224,116,56,.12)", icon: <IconPhone />,
-    title: "Just dial a number.",
-    text: "No app to install. No screen to navigate. Your loved one calls a dedicated phone number and Coco answers — immediately, patiently, in plain English. Voice-first by design, because that's what works.",
+    num: "01 / 04", iconBg: "rgba(224,116,56,.12)", icon: <IconPhone />,
+    title: "Max simplicity",
+    text: "Just 1 call away. No app downloads, no web searches, no confusion — just help when it’s needed.",
     tagBg: "#fff3cc", tagColor: "#a06a00", tag: "No smartphone skills required",
   },
   {
-    num: "02 / 03", iconBg: "rgba(61,140,106,.1)", icon: <IconShield />,
-    title: "Scam Shield.",
-    text: "Gemini 1.5 Flash monitors every call in real-time. The moment it detects high-pressure language — IRS threats, gift cards, wire transfer requests — it ends the call and texts you immediately.",
+    num: "02 / 04", iconBg: "rgba(61,140,106,.1)", icon: <IconShield />,
+    title: "Adaptive pace & tone",
+    text: "Slows down when users feel confused, speaks louder if needed, and stays warm, human, and patient throughout.",
     tagBg: "rgba(61,140,106,.09)", tagColor: "#2d6e52", tag: "Powered by Gemini",
   },
   {
-    num: "03 / 03", iconBg: "rgba(74,127,193,.1)", icon: <IconDashboard />,
-    title: "Caretaker dashboard.",
-    text: "See every call, AI-generated summaries, and live alerts — all in a web dashboard built for you. Configure Coco's voice, pacing, and personality. Stay informed without being in the room.",
+    num: "03 / 04", iconBg: "rgba(74,127,193,.1)", icon: <IconDashboard />,
+    title: "Active scam detection",
+    text: "Understands context in real-time to detect high-risk situations like suspicious transfers and alerts caregivers instantly.",
+    tagBg: "rgba(74,127,193,.1)", tagColor: "#2f5e9e", tag: "Full visibility & control",
+  },
+  {
+    num: "04 / 04", iconBg: "rgba(74,127,193,.1)", icon: <IconDashboard />,
+    title: "Security guardrails",
+    text: "Proactively reminds users never to share sensitive information like passwords, PINs, or banking details.",
     tagBg: "rgba(74,127,193,.1)", tagColor: "#2f5e9e", tag: "Full visibility & control",
   },
 ];
 
-const STEPS = [
-  { title: "Harold dials in",   text: "He calls his dedicated Coco number from any phone. No app, no internet, no setup needed." },
-  { title: "Coco listens",      text: "He describes his problem in plain English. Coco classifies the intent and loads the right guide instantly." },
-  { title: "Step by step",      text: "Coco talks Harold through every action, confirming each step. Adapts if he gets confused or goes off-track." },
-  { title: "You stay informed", text: "Sarah sees an AI summary of the call, any alerts triggered, and Harold's mood trend — all in the dashboard." },
-];
+// const STEPS = [
+//   { title: "Harold dials in",   text: "He calls his dedicated Coco number from any phone. No app, no internet, no setup needed." },
+//   { title: "Coco listens",      text: "He describes his problem in plain English. Coco classifies the intent and loads the right guide instantly." },
+//   { title: "Step by step",      text: "Coco talks Harold through every action, confirming each step. Adapts if he gets confused or goes off-track." },
+//   { title: "You stay informed", text: "Sarah sees an AI summary of the call, any alerts triggered, and Harold's mood trend — all in the dashboard." },
+// ];
 
 const PROBLEMS = [
   {
@@ -231,7 +237,7 @@ export default function LandingPage() {
         <div className="flex items-center gap-8">
           {(["#problem", "#solution", "#how"] as const).map((href, i) => (
             <a key={href} href={href} className="lp-nav-link text-sm text-[#6b5e4a] no-underline">
-              {["The Problem", "Features", "How it works"][i]}
+              {["The Problem", "Features"][i]}
             </a>
           ))}
         </div>
@@ -408,7 +414,7 @@ export default function LandingPage() {
         </div>
 
         {/* Centered card carousel */}
-        <div className="relative overflow-hidden" style={{ height: 480 }}>
+        <div className="relative overflow-hidden transition-all duration-300" style={{ height: 480 }}>
           {/* Left card */}
           <div
             className="absolute top-1/2 transition-all duration-500 cursor-pointer"
@@ -479,183 +485,53 @@ export default function LandingPage() {
           </button>
         </div>
       </section>
+      
+      {/* ── Caretaker peace of mind -- */}
+      <section className="bg-white px-[60px] py-[120px]">
+        <div className="max-w-[1100px] mx-auto flex flex-col gap-20">
 
-      {/* ── How It Works ── */}
-      <section id="how" className="bg-white px-[60px] py-[120px]">
-        <div className="text-center max-w-[560px] mx-auto mb-20">
-          <div className="lp-reveal text-[11.5px] font-bold tracking-[.12em] uppercase text-[#e07438] mb-3.5">
-            How it works
-          </div>
-          <h2
-            className="lp-reveal font-bold leading-[1.08] text-[#1c1309] tracking-[-1.5px]"
-            style={{ fontSize: "clamp(36px,5vw,56px)" }}
-          >
-            Simple as a phone call.
-          </h2>
-        </div>
-
-        {/* Two-column layout — inline gridTemplateColumns to guarantee parsing */}
-        <div
-          className="grid gap-[60px] max-w-[1100px] mx-auto items-start"
-          style={{ gridTemplateColumns: "360px 1fr" }}
-        >
-          {/* Left: steps list */}
-          <div className="flex flex-col relative">
-            {STEPS.map((step, i) => (
-              <div
-                key={i}
-                onClick={() => handleStepClick(i)}
-                className={`flex gap-5 px-5 py-6 rounded-2xl cursor-pointer relative transition-colors duration-200 ${
-                  activeStep === i ? "bg-[#fff8ee]" : "bg-transparent"
-                }`}
-              >
-                {i < 3 && (
-                  <div className="absolute left-[39px] top-[72px] bottom-[-24px] w-[1.5px] bg-[#ecdecb] z-0" />
-                )}
-                <div
-                  className={`w-[38px] h-[38px] rounded-full flex items-center justify-center text-sm font-extrabold shrink-0 relative z-[1] transition-all duration-300 ${
-                    activeStep === i
-                      ? "bg-[#e07438] text-white shadow-[0_4px_12px_rgba(224,116,56,.3)]"
-                      : "bg-[#ecdecb] text-[#9e8e7a]"
-                  }`}
-                >
-                  {i + 1}
-                </div>
-                <div className="pt-0.5">
-                  <div
-                    className={`text-[15px] font-bold mb-1 transition-colors duration-200 ${
-                      activeStep === i ? "text-[#1c1309]" : "text-[#6b5e4a]"
-                    }`}
-                  >
-                    {step.title}
-                  </div>
-                  {activeStep === i && (
-                    <div className="text-[13.5px] text-[#9e8e7a] leading-[1.6]">{step.text}</div>
-                  )}
-                </div>
-              </div>
-            ))}
+          {/* Section Header */}
+          <div className="max-w-[520px]">
+            <div className="text-[11.5px] font-bold uppercase text-[#e07438] mb-3">
+              Caretaker peace of mind
+            </div>
+            <h2 className="text-[48px] font-bold leading-[1.1] tracking-[-1px]">
+              Always informed.<br />Never intrusive.
+            </h2>
           </div>
 
-          {/* Right: visual panel */}
-          <div className="sticky top-[120px] rounded-3xl overflow-hidden border border-[#ecdecb] bg-[#fdf9f4] min-h-[460px] flex items-center justify-center">
+          {/* Subsection 1 */}
+          <div className="grid grid-cols-2 gap-16 items-center">
+            <div>
+              <h3 className="text-xl font-bold mb-4">Voice Personalisation</h3>
+              <ul className="text-[#6b5e4a] space-y-2 text-[15px]">
+                <li>• Voice: gender, tone, speaking speed</li>
+                <li>• Senior profile: name, phone type (iPhone/Samsung)</li>
+                <li>• Comfort level: adapts based on tech familiarity</li>
+              </ul>
+            </div>
 
-            {activeStep === 0 && (
-              <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
-                <HowPhone>
-                  <div className="text-[11px] text-[#9e8e7a] tracking-[.06em] uppercase mb-0.5">Coco</div>
-                  <div className="text-xl font-bold text-[#1c1309] tracking-[1px] mb-2.5 text-center">+1 855 626 2624</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {["1","2","3","4","5","6","7","8","9","","0",""].map((k, j) => (
-                      <div
-                        key={j}
-                        className="w-10 h-10 rounded-full bg-[#fff8ee] border border-[#ecdecb] flex items-center justify-center text-sm font-semibold text-[#1c1309]"
-                        style={{ visibility: k === "" ? "hidden" : "visible" }}
-                      >
-                        {k}
-                      </div>
-                    ))}
-                  </div>
-                  <div
-                    className="w-12 h-12 rounded-full bg-[#3d8c6a] flex items-center justify-center mt-1.5"
-                    style={{ animation: "lp-call-pulse 2s ease-in-out infinite" }}
-                  >
-                    <IconCallFill />
-                  </div>
-                </HowPhone>
-                <SceneLabel label="Any phone works" caption="Harold calls from the same number he always has. No setup, no downloads." />
-              </div>
-            )}
-
-            {activeStep === 1 && (
-              <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
-                <HowPhone>
-                  <div className="flex items-center gap-1.5 bg-[#fff3cc] border border-[rgba(245,168,0,.3)] rounded-[20px] py-[5px] px-2.5 text-[11px] font-semibold text-[#a06a00] self-start">
-                    <div className="w-[6px] h-[6px] bg-[#e07438] rounded-full" style={{ animation: "lp-pulse 1.5s infinite" }} />
-                    Call in progress
-                  </div>
-                  <div className="flex items-center gap-[5px] h-12">
-                    {[0, .15, .3, .15, 0].map((d, i) => (
-                      <span key={i} className="block w-1 h-[6px] bg-[#e07438] rounded-[2px]" style={{ animation: "lp-wave-bar 1.4s ease-in-out infinite", animationDelay: `${d}s` }} />
-                    ))}
-                  </div>
-                  <div className="bg-[#fff3cc] border border-[rgba(245,168,0,.3)] rounded-[12px_12px_12px_2px] px-3.5 py-2.5 text-xs text-[#7a5000] max-w-[140px] text-left leading-[1.5]">
-                    "I can't figure out how to send this photo to my daughter…"
-                  </div>
-                  <div className="bg-[rgba(61,140,106,.08)] border border-[rgba(61,140,106,.2)] rounded-[12px_12px_2px_12px] px-3.5 py-2.5 text-xs text-[#2d6e52] max-w-[140px] text-left leading-[1.5]">
-                    Got it! I can help with that. What phone do you have?
-                  </div>
-                </HowPhone>
-                <SceneLabel label="Plain English, always" caption="Coco hears the problem and loads the right guide — no menus, no forms to fill out." />
-              </div>
-            )}
-
-            {activeStep === 2 && (
-              <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
-                <HowPhone>
-                  <div className="text-[10px] font-bold uppercase tracking-[.08em] text-[#9e8e7a] mb-1 w-full">Sending a photo</div>
-                  <div className="flex flex-col gap-2 w-full">
-                    {[
-                      { label: "Open your Photos app", state: "done" },
-                      { label: "Find the photo",        state: "done" },
-                      { label: "Tap the Share button",  state: "current" },
-                      { label: "Choose Messages",       state: "pending" },
-                      { label: "Type daughter's name",  state: "pending" },
-                    ].map((row, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-2.5 rounded-[10px] px-3 py-[9px] text-xs text-[#6b5e4a] border ${
-                          row.state === "done"    ? "bg-[rgba(61,140,106,.07)] border-[rgba(61,140,106,.2)]" :
-                          row.state === "current" ? "bg-[#fff3cc] border-[rgba(245,168,0,.3)]" :
-                                                    "bg-[#fdf9f4] border-[#ecdecb]"
-                        }`}
-                      >
-                        <div
-                          className="w-[6px] h-[6px] rounded-full shrink-0"
-                          style={{
-                            background: row.state === "done" ? "#3d8c6a" : row.state === "current" ? "#e07438" : "#ecdecb",
-                            animation: row.state === "current" ? "lp-pulse 1.2s infinite" : undefined,
-                          }}
-                        />
-                        {row.label}
-                        {row.state === "done" && <span className="text-[#3d8c6a] text-xs ml-auto">✓</span>}
-                      </div>
-                    ))}
-                  </div>
-                </HowPhone>
-                <SceneLabel label="One step at a time" caption="Coco confirms each action before moving on. Never overwhelming, always patient." />
-              </div>
-            )}
-
-            {activeStep === 3 && (
-              <div className="flex flex-col items-center w-full text-center px-10 py-10 gap-7">
-                <div className="flex flex-col gap-3 w-full max-w-[320px]">
-                  <div className="text-[11px] font-bold uppercase tracking-[.08em] text-[#9e8e7a] mb-1">Harold's latest call</div>
-                  <div className="bg-white border border-[#ecdecb] rounded-xl px-4 py-3.5 text-left">
-                    <div className="text-[10px] font-bold uppercase tracking-[.08em] text-[#9e8e7a] mb-1.5">AI Summary</div>
-                    <div className="text-[13px] text-[#6b5e4a] leading-[1.55]">Harold needed help sending a photo via Messages. Resolved in 4 minutes. No scam activity detected.</div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {[
-                      { label: "Duration", val: "4m 22s",   sub: "Resolved ✓",   subColor: "text-[#3d8c6a]" },
-                      { label: "Mood",     val: "😊 Happy", sub: "+2 this week", subColor: "text-[#3d8c6a]" },
-                    ].map((item, i) => (
-                      <div key={i} className="bg-white border border-[#ecdecb] rounded-xl px-4 py-3.5 text-left">
-                        <div className="text-[10px] font-bold uppercase tracking-[.08em] text-[#9e8e7a] mb-1.5">{item.label}</div>
-                        <div className="text-[15px] font-bold text-[#1c1309]">{item.val}</div>
-                        <div className={`text-xs mt-0.5 ${item.subColor}`}>{item.sub}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-white border border-[#ecdecb] rounded-xl px-4 py-3.5 text-left">
-                    <div className="text-[10px] font-bold uppercase tracking-[.08em] text-[#9e8e7a] mb-1.5">Alerts</div>
-                    <div className="text-[13px] text-[#9e8e7a]">None triggered</div>
-                  </div>
-                </div>
-                <SceneLabel label="Full visibility" caption="Sarah sees every call, at a glance — without being on the phone herself." />
-              </div>
-            )}
+            <div className="h-[260px] rounded-2xl border border-[#ecdecb] bg-[#fdf9f4] flex items-center justify-center">
+              <span className="text-[#9e8e7a] text-sm">[ Voice setup UI placeholder ]</span>
+            </div>
           </div>
+
+          {/* Subsection 2 */}
+          <div className="grid grid-cols-2 gap-16 items-center">
+            <div>
+              <h3 className="text-xl font-bold mb-4">Smart dashboard</h3>
+              <ul className="text-[#6b5e4a] space-y-2 text-[15px]">
+                <li>• Conversation summaries with key topics</li>
+                <li>• Flags when the senior struggled</li>
+                <li>• Real-time scam alerts</li>
+              </ul>
+            </div>
+
+            <div className="h-[260px] rounded-2xl border border-[#ecdecb] bg-[#fdf9f4] flex items-center justify-center">
+              <span className="text-[#9e8e7a] text-sm">[ Dashboard UI placeholder ]</span>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -689,6 +565,25 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="bg-[#fdf9f4] py-[80px] overflow-hidden">
+        <div className="text-center mb-10">
+          <div className="text-[11.5px] font-bold uppercase text-[#e07438] mb-2">
+            Built with modern AI stack
+          </div>
+        </div>
+
+        <div className="flex gap-16 animate-scroll whitespace-nowrap">
+          {["ElevenLabs", "Supabase", "Next.js", "Vercel", "Gemini"].map((tech, i) => (
+            <div
+              key={i}
+              className="text-[#6b5e4a] text-lg font-semibold opacity-70"
+            >
+              {tech}
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className="bg-[#fdf9f4] border-t border-[#f3ebe0] px-[60px] py-12 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -704,7 +599,7 @@ export default function LandingPage() {
         <div className="flex gap-7">
           {(["#problem", "#solution", "#how"] as const).map((href, i) => (
             <a key={href} href={href} className="lp-footer-link text-[13px] text-[#9e8e7a] no-underline">
-              {["Problem", "Features", "How it works"][i]}
+              {["Problem", "Features"][i]}
             </a>
           ))}
         </div>
