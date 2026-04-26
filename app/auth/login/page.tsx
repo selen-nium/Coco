@@ -6,15 +6,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* Left dark panel */}
       <div className="hidden w-[420px] shrink-0 flex-col justify-between bg-[#17120a] p-10 lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#e8733b]">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 3C6.79 3 5 4.79 5 7c0 1.48.81 2.77 2 3.46V12h4v-1.54C12.19 9.77 13 8.48 13 7c0-2.21-1.79-4-4-4z" fill="white" opacity=".9"/>
-              <rect x="7" y="12" width="4" height="1.5" rx=".75" fill="white" opacity=".7"/>
-              <rect x="7.5" y="14" width="3" height="1" rx=".5" fill="white" opacity=".5"/>
-            </svg>
-          </div>
-          <span className="text-base font-semibold text-white">Coco</span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Coco" className="h-9 w-auto brightness-0 invert" />
         </div>
 
         <div className="space-y-6">
@@ -44,8 +38,13 @@ export default function LoginPage() {
       </div>
 
       {/* Right light panel */}
-      <div className="flex flex-1 items-center justify-center bg-[#f5f4f0] px-6 py-12">
+      <div className="flex flex-1 items-center justify-center bg-[#f5f4f0] px-5 py-12 min-h-screen lg:min-h-0">
         <div className="w-full max-w-sm">
+          {/* Mobile logo (shown when left panel is hidden) */}
+          <div className="flex justify-center mb-8 lg:hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Coco" className="h-9 w-auto" />
+          </div>
           <h2 className="text-3xl font-bold text-[#1a1208]">Welcome back</h2>
           <p className="mt-2 text-sm text-[#888]">Sign in to your caretaker dashboard.</p>
           <div className="mt-8">

@@ -186,15 +186,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f4f0]">
+    <div className="min-h-screen bg-[#f5f4f0] px-4">
       <div className="flex justify-center py-8">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8733b]">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2C5.79 2 4 3.79 4 6c0 1.48.81 2.77 2 3.46V8h4V7.46C11.19 5.77 12 4.48 12 3c0-2.21-1.79-4-4-4z" fill="white" opacity=".9"/>
-            </svg>
-          </div>
-          <span className="font-semibold text-[#1a1208]">Coco</span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Coco" className="h-9 w-auto" />
         </div>
       </div>
 
@@ -217,7 +213,7 @@ export default function SignupPage() {
                 <h2 className="text-2xl font-bold text-[#1a1208]">Create your account</h2>
                 <p className="mt-1 text-sm text-[#888]">You'll use this to log into your Coco caretaker dashboard.</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="First name" placeholder="Sarah" value={profile.firstName} onChange={e => setProfile(p => ({ ...p, firstName: e.target.value }))} />
                 <Input label="Last name" placeholder="Mitchell" value={profile.lastName} onChange={e => setProfile(p => ({ ...p, lastName: e.target.value }))} />
               </div>

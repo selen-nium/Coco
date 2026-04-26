@@ -123,13 +123,31 @@ html, body { overflow-x: hidden; }
 .lp-features-track { scrollbar-width: none; }
 .lp-features-track::-webkit-scrollbar { display: none; }
 
-/* ── Tech logo scroll ── */
-@keyframes lp-tech-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+/* ── Feature card enter animation ── */
+@keyframes lp-card-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
 }
-.lp-tech-scroll {
-  animation: lp-tech-scroll 28s linear infinite;
-  width: max-content;
+
+/* ── Problem card hover ── */
+.lp-problem-card { transition: transform .25s ease, box-shadow .25s ease; }
+.lp-problem-card:hover { transform: translateY(-5px); box-shadow: 0 16px 48px rgba(28,19,9,.1) !important; }
+
+/* ── Animated underline for "better" ── */
+.lp-underline-anim {
+  position: relative;
+  text-decoration: none;
+  display: inline;
 }
-.lp-tech-scroll:hover { animation-play-state: paused; }
+.lp-underline-anim::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: #e07438;
+  border-radius: 2px;
+  transition: width .9s cubic-bezier(.22,1,.36,1) .35s;
+}
+.lp-reveal-l.in .lp-underline-anim::after { width: 100%; }

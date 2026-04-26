@@ -13,23 +13,13 @@ export function DashboardSidebar({ caretaker, primaryUser }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const firstName = caretaker.name?.split(" ")[0] ?? caretaker.name;
 
-  const logoSvg = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M8 2C5.79 2 4 3.79 4 6c0 1.48.81 2.77 2 3.46V8h4V7.46C11.19 5.77 12 4.48 12 3c0-2.21-1.79-4-4-4z" fill="white" opacity=".9"/>
-      <rect x="6" y="8" width="4" height="1.5" rx=".75" fill="white" opacity=".7"/>
-      <rect x="6.5" y="10" width="3" height="1" rx=".5" fill="white" opacity=".5"/>
-    </svg>
-  );
-
   return (
     <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between bg-[#17120a] px-4 py-3 border-b border-white/8">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#e8733b]">
-            {logoSvg}
-          </div>
-          <span className="font-bold text-white text-sm tracking-tight">Coco</span>
+        <div className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Coco" className="h-7 w-auto brightness-0 invert" />
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -53,11 +43,9 @@ export function DashboardSidebar({ caretaker, primaryUser }: SidebarProps) {
       {/* Sidebar */}
       <aside className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-[#17120a] overflow-y-auto transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8733b]">
-              {logoSvg}
-            </div>
-            <span className="font-semibold text-white tracking-tight">Coco</span>
+          <div className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Coco" className="h-8 w-auto brightness-0 invert" />
           </div>
           <button 
             className="lg:hidden text-[#8a7a6a] hover:text-white transition-colors" 
