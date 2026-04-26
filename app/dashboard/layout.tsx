@@ -27,7 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex min-h-screen bg-[#f5f4f0]">
-      <aside className="flex w-60 shrink-0 flex-col bg-[#17120a] min-h-screen sticky top-0 h-screen">
+      <aside className="fixed left-0 top-0 z-30 flex h-screen w-60 flex-col bg-[#17120a] overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/8">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8733b]">
@@ -70,7 +70,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 p-8 overflow-auto">{children}</main>
+      <main className="ml-60 flex-1 min-w-0 p-8">{children}</main>
     </div>
   );
 }

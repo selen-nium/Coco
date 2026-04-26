@@ -146,6 +146,7 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {alerts.length > 0 && <LiveAlertsPanel initialAlerts={alerts} />}
 
       <div className="grid gap-4 grid-cols-3">
         <Card className="p-5">
@@ -229,7 +230,6 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {alerts.length > 0 && <LiveAlertsPanel initialAlerts={alerts} />}
     </div>
   );
 }
