@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
 // Gemini text-embedding-004 — used for semantic memory retrieval
 const embeddingModel = genAI.getGenerativeModel({
-  model: "text-embedding-004",
+  model: "text-embedding-005",
 });
 
 export const brainModel = genAI.getGenerativeModel({
