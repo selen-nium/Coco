@@ -1,7 +1,7 @@
 # Agent 1 — Voice & Telephony Pipeline (ElevenLabs Edition)
 
 ## Mission
-Wre up te end-to-end phone call using the ElevenLabs Agents API. Twilio handles the telephony, and your Next.js app handles the inbound webhook to route the call to ElevenLabs. You are also responsible for providing the core Server Tools (webhooks) that the AI uses to interact with the database and the caretaker.
+Wre up the end-to-end phone call using the ElevenLabs Agents API. Twilio handles the telephony, and your Next.js app handles the inbound webhook to route the call to ElevenLabs. You are also responsible for providing the core Server Tools (webhooks) that the AI uses to interact with the database and the caretaker.
 
 ## Files You Own
 ```
