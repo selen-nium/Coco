@@ -50,7 +50,7 @@ export function ScamAlertsCard() {
       await fetch(`/api/dashboard/alerts/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ status: "inactive" }),
+        body: JSON.stringify({ status: "dismissed" }),
       });
       setAlerts((prev) => prev.filter((a) => a.id !== id));
     } finally {

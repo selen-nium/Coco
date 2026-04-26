@@ -56,11 +56,19 @@ async function handleLookup(phone: string | null, call_sid: string | null) {
     .eq("elderly_user_id", elderlyUser.id)
     .not("summary", "is", null)
     .order("started_at", { ascending: false })
-    .limit(3);
+    .limit(2);
 
-  const recentHistory = recentCalls && recentCalls.length > 0
-    ? recentCalls.map(c => c.summary).join(" ")
-    : "No recent conversations.";
+  let recentHistory = "No recent conversations.";
+  if (recentCalls && recentCalls.length > 0) {
+    const parts = [];
+    if (recentCalls[0]) {
+      parts.push(`In the latest conversation, the user talked about ${recentCalls[0].summary}`);
+    }
+    if (recentCalls[1]) {
+      parts.push(`and then in the second last conversation, ${recentCalls[1].summary}`);
+    }
+    recentHistory = parts.join(" ");
+  }
 
   const agentConfig = elderlyUser.agent_configs[0] || { metaphor_mode: false };
   const caretakerPhone = elderlyUser.caretakers?.phone || "Unknown";

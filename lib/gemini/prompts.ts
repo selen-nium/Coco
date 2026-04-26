@@ -100,6 +100,35 @@ Transcript:
 ${transcript}`;
 }
 
+export function buildMemoryReRankerPrompt(params: {
+  query: string;
+  summaries: { summary: string; date: string }[];
+}) {
+  return `You are a memory retrieval assistant for Coco, a tech support AI for the elderly.
+The user is asking: "${params.query}"
+
+Below are summaries of past conversations that might contain the answer:
+${params.summaries
+  .map((s, i) => `[Memory ${i + 1}] Date: ${s.date}\nContent: ${s.summary}`)
+  .join("\n\n")}
+
+Your task:
+1. Identify which memories (if any) are actually relevant to the user's current query.
+2. Synthesize a concise, helpful "recalled memory" string that Coco can use to answer the user.
+3. If no memories are relevant, state that clearly.
+
+Return JSON only with this exact shape:
+{
+  "relevant": boolean,
+  "recalled_memory": string | null
+}
+
+Rules:
+- Be extremely concise.
+- If multiple memories are relevant, combine them chronologically.
+- Do not make up facts.`;
+}
+
 export function buildMoodPrompt(transcript: string) {
   return `Analyze the emotional state of the elderly caller in this support call.
 

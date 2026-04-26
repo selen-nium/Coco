@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
-import { embedText, toVectorLiteral } from "@/lib/gemini/client";
+import { embedText, extractJsonBlock, generateText, toVectorLiteral } from "@/lib/gemini/client";
+import { buildMemoryReRankerPrompt } from "@/lib/gemini/prompts";
 
 const requestSchema = z.object({
   query: z.string().trim().min(1),
@@ -15,10 +16,15 @@ type SummaryMatch = {
   similarity: number;
 };
 
+const reRankResultSchema = z.object({
+  relevant: z.boolean(),
+  recalled_memory: z.string().nullable(),
+});
+
 /**
  * POST /api/tools/recall-memory
  * Server Tool for ElevenLabs Agent to search past conversation history.
- * Updated to search call summaries for better high-level fact retrieval.
+ * Uses Vector Search + LLM Re-ranking for high precision.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -51,8 +57,8 @@ export async function POST(req: NextRequest) {
     const { data: matches, error } = await supabase.rpc("match_call_summaries", {
       query_embedding: toVectorLiteral(embedding),
       elderly_id: elderly_user_id,
-      match_threshold: 0.4, // Lowered threshold for broad summary matching
-      match_count: 3,
+      match_threshold: 0.35, // Lowered threshold to give re-ranker more to work with
+      match_count: 5, // Increased limit for re-ranking
     });
 
     if (error) {
@@ -68,17 +74,39 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    console.log(`[recall-memory] Found ${matches.length} matching summaries`);
-
-    const memoryBlocks = (matches as SummaryMatch[]).map((match) => {
-      const date = new Date(match.started_at).toLocaleDateString();
-      console.log(`[recall-memory] Match (${match.similarity.toFixed(4)}): ${match.summary.substring(0, 100)}...`);
-      return `Summary of conversation on ${date}: "${match.summary}"`;
+    console.log(`[recall-memory] Found ${matches.length} matching summaries, invoking re-ranker...`);
+    (matches as SummaryMatch[]).forEach((m, i) => {
+      console.log(`  [Match ${i + 1}] Similarity: ${m.similarity.toFixed(4)} | Summary: ${m.summary.substring(0, 80)}...`);
     });
 
-    const memory = memoryBlocks.join("\n\n");
+    const rawReRank = await generateText(
+      buildMemoryReRankerPrompt({
+        query,
+        summaries: (matches as SummaryMatch[]).map((m) => ({
+          summary: m.summary,
+          date: new Date(m.started_at).toLocaleDateString(),
+        })),
+      })
+    );
 
-    return NextResponse.json({ success: true, memory });
+    console.log("[recall-memory] Raw LLM Re-ranker Output:", rawReRank);
+
+    const result = reRankResultSchema.parse(extractJsonBlock(rawReRank));
+
+    if (!result.relevant || !result.recalled_memory) {
+      console.log("[recall-memory] LLM Re-ranker found no relevant info.");
+      return NextResponse.json({
+        success: true,
+        memory: "I found some past conversations, but none of them seem to contain the information you're looking for.",
+      });
+    }
+
+    console.log("[recall-memory] Final synthesized memory:", result.recalled_memory);
+
+    return NextResponse.json({
+      success: true,
+      memory: result.recalled_memory,
+    });
   } catch (error) {
     console.error("[recall-memory] Error:", error);
     if (error instanceof z.ZodError) {
