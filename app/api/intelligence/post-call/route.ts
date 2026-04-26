@@ -14,22 +14,37 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
     const signature = req.headers.get("elevenlabs-signature");
 
-    const secret = process.env.ELEVENLABS_WEBHOOK_SECRET || "wsec_625da311609f0fb97cf6aa0c1f48b7da3ec27072acae379b0172f51afdc27737";
+    const secret = process.env.ELEVENLABS_WEBHOOK_SECRET;
 
     if (!signature) {
       console.error("[post-call] Missing ElevenLabs signature");
       return NextResponse.json({ error: "Missing signature" }, { status: 401 });
     }
 
+    if (!secret) {
+      console.error("[post-call] ELEVENLABS_WEBHOOK_SECRET not set");
+      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+    }
+
+    // ElevenLabs signature format: "t=<timestamp>,v0=<hex>"
+    // HMAC is computed over "<timestamp>.<rawBody>"
+    const parts = Object.fromEntries(signature.split(",").map(p => p.split("=")));
+    const timestamp = parts["t"];
+    const v0 = parts["v0"];
+
+    if (!timestamp || !v0) {
+      console.error("[post-call] Malformed signature header:", signature);
+      return NextResponse.json({ error: "Invalid signature format" }, { status: 401 });
+    }
+
     const expectedSignature = crypto
       .createHmac("sha256", secret)
-      .update(rawBody)
+      .update(`${timestamp}.${rawBody}`)
       .digest("hex");
 
-    const signatureBuffer = Buffer.from(signature);
+    const signatureBuffer = Buffer.from(v0);
     const expectedBuffer = Buffer.from(expectedSignature);
 
-    // timingSafeEqual throws an error if buffer lengths don't match
     if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       console.error("[post-call] Invalid HMAC signature. Unauthorized request.");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
