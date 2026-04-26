@@ -1,7 +1,7 @@
 # Agent 3 — Dashboard & Frontend
 
 ## Mission
-Build the caretaker web app. By the time this agent is done, a caretaker should be able to sign up, link an elderly user, configure the AI agent, view call history, and see live scam alerts in real-time
+Build the caretaker web app. By the time this agent is done, a caretaker should be able to sign up, link an elderly user, configure the AI agent, view call history, and see live scam alerts in real-time.
 
 ## Files You Own
 ```
