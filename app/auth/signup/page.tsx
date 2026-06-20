@@ -307,14 +307,14 @@ export default function SignupPage() {
 
               <div className="rounded-2xl bg-[#fef3e0] border border-[#fde68a] px-6 py-5">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#d97706] mb-2">Coco's phone number</p>
-                <p className="text-4xl font-bold tracking-wide text-[#1a1208]">+65 9999 9999</p>
+                <p className="text-4xl font-bold tracking-wide text-[#1a1208]">+1 (888) 870-8838</p>
                 <p className="text-xs text-[#d97706] mt-2">This is the number {elderly.nickname || elderly.name || "they"} will call to reach Coco</p>
               </div>
 
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText("+6599999999");
+                  navigator.clipboard.writeText("+18888708838");
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}
