@@ -56,7 +56,7 @@ Elderly User → Twilio → ElevenLabs Voice Agent
 ## Features
 
 **For the elderly user**
-- Call a single number (`+1 888 870-8838`) — no app required
+- Call a single number (`+65 9999 9999`) — no app required
 - Patient, conversational step-by-step guidance
 - Device-aware instructions (tuned to their phone model)
 - Real-time scam detection mid-call
